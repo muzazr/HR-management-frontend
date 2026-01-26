@@ -1,12 +1,20 @@
-import Link from 'next/link';
-import LoginPage from './(auth)/login/page';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { AuthHelper } from '../lib/auth';
+import LoadingSpinner from '../components/auth/LoadingSpinner';
 
 export default function HomePage() {
-  return (
-      <div className="w-full min-h-screen max-w-6xl mx-auto">
-        <div className="relative bg-[#1f1f1f] rounded-[2rem] overflow-hidden shadow-2xl">
-          <LoginPage />
-        </div>
-      </div>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    if (AuthHelper.isAuthenticated()) {
+      router.replace('/dashboard');
+    } else {
+      router.replace('/login');
+    }
+  }, [router]);
+
+  return <LoadingSpinner />;
 }

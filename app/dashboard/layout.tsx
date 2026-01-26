@@ -1,6 +1,5 @@
 export default function DashboardLayout ({
     children,
-    modal
 }: {
     children:  React.ReactNode
     modal: React.ReactNode
@@ -8,7 +7,6 @@ export default function DashboardLayout ({
     return (
         <div className="min-h-screen bg-[#151515] px-4 lg:px-8 py-4 lg:py-8">
             {children}
-            {modal}
         </div>
     )
 }

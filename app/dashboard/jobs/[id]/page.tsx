@@ -1,88 +1,59 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import CandidateDetailModal from '../../../../components/applicant/CandidateDetailModal'
-
-interface Applicant {
-    id: number
-    name: string
-    email:  string
-    phone: string
-    skills: string[]
-    score:  number
-    summary: string
-    aiAnalysis: string
-    position?: string
-}
+import EditJobModal from '../../../../components/jobs/EditJobModal'
+import NotificationModal from '../../../../components/NotificationModal'  
+import { useNotification } from '../../../../hooks/useNotification'
+import { ApiService } from '../../../../lib/api'
+import { Job } from '../../../../types/job'
+import { Applicant } from '../../../../types/applicant'
 
 export default function JobDetailPage() {
     const params = useParams()
     const router = useRouter()
     const jobId = params.id as string
+    const { notification, showSuccess, showError, close } = useNotification()
 
+    const [job, setJob] = useState<Job | null>(null)
+    const [applicants, setApplicants] = useState<Applicant[]>([])
     const [uploadedCVs, setUploadedCVs] = useState<File[]>([])
     const [searchQuery, setSearchQuery] = useState('')
-    
     const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null)
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
-    const [applicants] = useState<Applicant[]>([
-        {
-            id:  1,
-            name: 'Muhammad Zaki Azhar',
-            email: 'zakiazhar04@gmail.com',
-            phone: '+62 812-3456-7890',
-            skills: ['UI/UX', 'Figma', 'Prototyping'],
-            score: 10,
-            position: 'Sr. UX Designer',
-            summary: 'Experienced UX designer with 5 years of expertise in mobile and web applications. Led the redesign of the booking process for Airbnb\'s mobile app, resulting in a 30% increase in conversion rates and improved user satisfaction.',
-            aiAnalysis: 'Strong match for the role. Candidate demonstrates excellent design thinking skills and has proven track record of improving user experience metrics.  Communication skills are outstanding based on portfolio presentation.'
-        },
-        {
-            id: 2,
-            name: 'Muhammad Najmi Azhar',
-            email: 'zakiazhar04@gmail.com',
-            phone: '+62 812-3456-7890',
-            skills: ['UI/UX', 'Figma', 'Prototyping'],
-            score: 9.5,
-            position: 'UX Designer',
-            summary: 'Experienced UX designer with 5 years.. .',
-            aiAnalysis: 'Strong match for the role.. .'
-        },
-        {
-            id: 3,
-            name: 'Muhammad Iqbal Hilmi',
-            email: 'zakiazhar04@gmail.com',
-            phone: '+62 812-3456-7890',
-            skills: ['UI/UX', 'Figma', 'Prototyping'],
-            score: 9.73,
-            position: 'Product Designer',
-            summary: 'Experienced UX designer with 5 years.. .',
-            aiAnalysis: 'Strong match for the role...'
-        },
-        {
-            id: 4,
-            name: 'Muhammad Iqbal Hilmi',
-            email: 'zakiazhar04@gmail.com',
-            phone: '+62 812-3456-7890',
-            skills: ['UI/UX', 'Figma', 'Prototyping'],
-            score:  9.73,
-            position: 'UI Designer',
-            summary: 'Experienced UX designer with 5 years.. .',
-            aiAnalysis: 'Strong match for the role...'
-        },
-    ])
+    const [isLoading, setIsLoading] = useState(true)
+    const [isUploading, setIsUploading] = useState(false)
+    const [error, setError] = useState('')
 
-    const job = {
-        id: jobId,
-        title: 'Growth Manager',
-        location: 'Remote',
-        requirement: 'Bachelor Degree',
-        deadline: '2026-01-17',
-        skills: 'Marketing, Analytics, Growth Hacking, SEO',
-        applicants: applicants.length,
-        status: true
+    useEffect(() => {
+        fetchJobData()
+    }, [])
+
+    const fetchJobData = async () => {
+        setIsLoading(true)
+        setError('')
+
+        try {
+            const jobResponse = await ApiService.getJobById(jobId)
+            if(jobResponse.success && jobResponse.data) {
+                setJob(jobResponse.data)
+            } else {
+                setError('job not found')
+                return
+            } 
+
+            const applicantsResponse = await ApiService.getApplicantsByJobId(jobId)
+            if(applicantsResponse.success && applicantsResponse.data) {
+                setApplicants(applicantsResponse.data)
+            }
+        } catch (err: any){
+            setError(err.message || 'Failed to load job data')
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const displayedApplicants = useMemo(() => {
@@ -93,7 +64,7 @@ export default function JobDetailPage() {
                 originalRank: index + 1
             }))
 
-        if (searchQuery. trim()) {
+        if (searchQuery.trim()) {
             return sortedWithRanking.filter(applicant => 
                 applicant.name. toLowerCase().includes(searchQuery.toLowerCase())
             )
@@ -105,7 +76,12 @@ export default function JobDetailPage() {
     const handleFileUpload = (e: React. ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files
         if (files) {
-            setUploadedCVs(prev => [...prev, ...Array.from(files)])
+            const pdfFiles = Array.from(files).filter(file => file.type === 'application/pdf')
+            if(pdfFiles.length !== files.length){
+                showError('Invalid File Type', 'Only PDF files are allowed!') 
+            }
+
+            setUploadedCVs(prev => [...prev, ...pdfFiles])
         }
     }
 
@@ -114,24 +90,134 @@ export default function JobDetailPage() {
     }
 
     const handleSubmit = async () => {
-        console.log('Submitting CVs:', uploadedCVs)
-        setUploadedCVs([])
+        if (uploadedCVs.length === 0) return
+
+        setIsUploading(true)
+        try {
+            const response = await ApiService.uploadCVs(jobId, uploadedCVs)
+            
+            if (response.success && response.data) {
+                // Add new applicants to list
+                setApplicants(prev => [...response.data!, ...prev])
+                setUploadedCVs([])
+
+                showSuccess(
+                    'CVs Processed Successfully!',
+                    `${uploadedCVs.length} CV(s) have been processed and applicants added.`
+                )
+                
+                // Refresh job to update applicant count
+                const jobResponse = await ApiService.getJobById(jobId)
+                if (jobResponse.success && jobResponse.data) {
+                    setJob(jobResponse.data)
+                }
+            } else {
+                showError('Processing Failed', response.error || 'Failed to process CVs')
+            }
+        } catch (err: any) {
+            showError('Upload Error', err.message || 'Failed to upload CVs')
+        } finally {
+            setIsUploading(false)
+        }
     }
 
-    // ✅ NEW: Modal handlers
-    const handleUpdateCV = (applicantId: number, file: File) => {
-        console.log(`Updating CV for applicant ${applicantId}: `, file.name)
-        // TODO: API call
+    const handleUpdateCV = async (applicantId: string, file: File) => {
+        try {
+            const response = await ApiService.updateApplicantCV(applicantId.toString(), file)
+            
+            if (response.success && response.data) {
+                // Update applicant in list
+                setApplicants(prev => 
+                    prev.map(app => app.id === applicantId.toString() ? response.data!  : app)
+                )
+                
+                // Update selected applicant if it's the same one
+                if (selectedApplicant?.id === applicantId.toString()) {
+                    setSelectedApplicant(response.data)
+                }
+                
+                showSuccess('CV Updated!', 'The CV has been successfully updated and reprocessed.')
+            } else {
+                showError('Update Failed', response.error || 'Failed to update CV')
+            }
+        } catch (err: any) {
+            showError('Update Error', err.message || 'Failed to update CV')
+        }
     }
 
-    const handleDeleteApplicant = (applicantId:  number) => {
-        console. log(`Deleting applicant ${applicantId}`)
-        // TODO: API call
-        setSelectedApplicant(null)
+    const handleDeleteApplicant = async (applicantId:  string) => {
+        try {
+            const response = await ApiService.deleteApplicant(applicantId.toString())
+            
+            if (response.success) {
+                // Remove from list
+                setApplicants(prev => prev.filter(app => app.id !== applicantId.toString()))
+                setSelectedApplicant(null)
+                showSuccess('Applicant Deleted', 'The applicant has been successfully removed.')
+                
+                // Refresh job to update applicant count
+                const jobResponse = await ApiService.getJobById(jobId)
+                if (jobResponse.success && jobResponse. data) {
+                    setJob(jobResponse.data)
+                }
+            } else {
+                showError('Delete Failed', response.error || 'Failed to delete applicant')
+            }
+        } catch (err:  any) {
+            showError('Delete Error', err.message || 'Failed to delete applicant')
+        }
+    }
+
+    const handleEditJob = async (updates: {
+        title: string
+        location: string
+        requirement: string
+        skills: string
+        deadline: string
+    }) => {
+        try {
+            const response = await ApiService.updateJob(jobId, updates)
+            if (response.success && response.data) {
+                setJob(response.data)
+                setIsEditModalOpen(false)
+                showSuccess('Job Updated!', 'The job details have been successfully updated.')
+            } else {
+                showError('Update Failed', response.error || 'Failed to update job')
+            }
+        } catch (err: any) {
+            showError('Update Error', err.message || 'Failed to update job')
+        }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-[#151515] flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
+                    <p className="text-gray-400">Loading job details...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (error || !job) {
+        return (
+            <div className="min-h-screen bg-[#151515] flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-400 mb-4">{error || 'Job not found'}</p>
+                    <button 
+                        onClick={() => router.push('/dashboard')}
+                        className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+                    >
+                        Back to Dashboard
+                    </button>
+                </div>
+            </div>
+        )
     }
 
     return (
-        <div className="min-h-screen bg-[#151515] px-4 lg:px-8 py-4 lg:py-8">
+        <div className="min-h-screen bg-[#151515] px-4">
             
             {/* Header */}
             <div className="flex items-center justify-between mb-8 bg-[#1e1e1e] rounded-2xl p-4">
@@ -145,7 +231,9 @@ export default function JobDetailPage() {
                 </button>
                 <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-white">{job.title}</h1>
 
-                <button className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+                <button 
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
                     <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -170,6 +258,7 @@ export default function JobDetailPage() {
                             multiple
                             onChange={handleFileUpload}
                             className="hidden"
+                            disabled={isUploading}
                         />
                         <div className="text-center">
                             <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center">
@@ -213,6 +302,7 @@ export default function JobDetailPage() {
                                     <button 
                                         onClick={() => removeCV(index)}
                                         className="p-1 hover:bg-white/10 rounded transition-colors flex-shrink-0"
+                                        disabled={isUploading}
                                     >
                                         <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -224,10 +314,10 @@ export default function JobDetailPage() {
 
                         <button 
                             onClick={handleSubmit}
-                            disabled={uploadedCVs.length === 0}
+                            disabled={uploadedCVs.length === 0 || isUploading}
                             className="w-full px-6 py-3 bg-[#151515] hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all"
                         >
-                            Submit
+                            {isUploading ? 'Processing CVs...' : 'Submit'}
                         </button>
                     </div>
                 </div>
@@ -235,7 +325,7 @@ export default function JobDetailPage() {
 
             {/* Search */}
             <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#272727]">
-                <h2 className="text-xl font-semibold text-white">Applicant</h2>
+                <h2 className="text-xl font-semibold text-white">Applicant ({applicants.length})</h2>
                 <div className="relative bg-[#242424] hover:bg-[#1f1f1f] rounded-2xl">
                     <input 
                         type="text"
@@ -265,29 +355,50 @@ export default function JobDetailPage() {
 
                     {/* Body */}
                     <div className="overflow-x-auto">
-                        {displayedApplicants.map((applicant) => (
-                            <div 
-                                key={applicant. id}
-                                onClick={() => setSelectedApplicant(applicant)}
-                                className="flex justify-between py-4 px-4 hover:bg-[#151515] cursor-pointer transition-colors rounded-lg"
-                            >
-                                <div className="text-center text-white flex-1/10">{applicant.originalRank}</div>
-                                <div className="text-center text-white flex-4/10">{applicant.name}</div>
-                                <div className="text-center text-white flex-4/10">{applicant.email}</div>
-                                <div className="text-center text-white flex-1/10 font-semibold">{applicant.score}</div>
+                        {displayedApplicants.length === 0 ? (
+                            <div className='text-center py-12 text-gray-400'>
+                                No applicants yet. Upload CVs to get started.
                             </div>
-                        ))}
+                        ) :
+                        (
+                        displayedApplicants.map((applicant) => (
+                                <div 
+                                    key={applicant. id}
+                                    onClick={() => setSelectedApplicant(applicant)}
+                                    className="flex justify-between py-4 px-4 hover:bg-[#151515] cursor-pointer transition-colors rounded-lg"
+                                >
+                                    <div className="text-center text-white flex-1/10">{applicant.originalRank}</div>
+                                    <div className="text-center text-white flex-4/10">{applicant.name}</div>
+                                    <div className="text-center text-white flex-4/10">{applicant.email}</div>
+                                    <div className="text-center text-white flex-1/10 font-semibold">{applicant.score}</div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* ✅ NEW: Modal */}
             <CandidateDetailModal 
                 isOpen={selectedApplicant !== null}
                 onClose={() => setSelectedApplicant(null)}
                 applicant={selectedApplicant}
                 onUpdateCV={handleUpdateCV}
                 onDeleteApplicant={handleDeleteApplicant}
+            />
+
+            <EditJobModal 
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen}
+                job={job}
+                onSubmit={handleEditJob}
+            />
+
+            <NotificationModal 
+                isOpen={notification.isOpen}
+                onClose={close}
+                type={notification.type}
+                title={notification.title}
+                message={notification.message}
             />
         </div>
     )

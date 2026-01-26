@@ -1,6 +1,43 @@
 import Image from "next/image"
+import { useAuth } from "../../hooks/useAuth"
+import { useEffect, useState } from "react"
+import { ApiService } from "../../lib/api"
 
 export default function GreetingSection () {
+
+    const { user } = useAuth()
+    const [stats, setStats] = useState({
+        openJobs: 0,
+        closedJobs: 0,
+        totalApplicants: 0
+    })
+
+    useEffect(() => {
+        fetchStats()
+    })
+
+    const fetchStats = async () => {
+        try {
+            const response = await ApiService.getJobStats()
+            if(response.success && response.data) {
+                setStats({
+                    openJobs: response.data.openJobs,
+                    closedJobs: response.data.closedJobs,
+                    totalApplicants: response.data.totalApplicants
+                })
+            }
+        } catch (error) {
+            console.log('Failed to fetch stats', error) //ini harus dimodified nanti
+        }
+    }
+
+    const getGreeting = () => {
+        const hour = new Date().getHours()
+        if(hour >= 6 && hour < 12) return 'Morning'
+        if(hour >= 12 && hour < 18) return 'Afternoon'
+        return 'Evening'
+    }
+
     return (
         <div className="relative w-full bg-[#1e1e1e] rounded-2xl pt-4 pb-12 px-4 lg:px-8 overflow-hidden group">
             
@@ -57,7 +94,7 @@ export default function GreetingSection () {
                         </button>
                         <button className="w-8 h-8 lg:w-10 lg:h-10 rounded-full overflow-hidden cursor-pointer" > 
                                 <Image 
-                                    src="/icons/profile-picture.png"
+                                    src={user?.photo || "/icons/default-avatar.png"}
                                     alt="profile"
                                     width={40}
                                     height={40}
@@ -72,7 +109,7 @@ export default function GreetingSection () {
                     
                     {/* Left side */}
                     <div className="space-y-4 lg:space-y-6 lg:flex-1/3">
-                        <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl text-[#FFFFFF]">Morning, Maya</h2>
+                        <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl text-[#FFFFFF]">Good {getGreeting()}, {user?.name?.split(' ')[0] || 'User'}</h2>
                         <p className="text-[#ffffff] text-base md:text-lg lg:text-xl">Track And Manage Your Recruitment Here! </p>
                     </div>
 
@@ -97,7 +134,7 @@ export default function GreetingSection () {
                             </div>
 
                             <div className="flex flex-col items-end gap-2 lg:gap-3">
-                                <div className="text-4xl lg:text-5xl font-bold text-[#ffffff] leading-none">1234</div>
+                                <div className="text-4xl lg:text-5xl font-bold text-[#ffffff] leading-none">{stats.openJobs}</div>
                                 <div className="text-[#8a8a8a] mt-1 text-xs">Position</div>
                             </div>
                         </div>
@@ -120,7 +157,7 @@ export default function GreetingSection () {
                             </div>
 
                             <div className="flex flex-col items-end gap-2 lg:gap-3">
-                                <div className="text-4xl lg:text-5xl font-bold text-[#ffffff] leading-none">1234</div>
+                                <div className="text-4xl lg:text-5xl font-bold text-[#ffffff] leading-none">{stats.closedJobs}</div>
                                 <div className="text-[#8a8a8a] mt-1 text-xs">Position</div>
                             </div>
                         </div>
@@ -143,8 +180,8 @@ export default function GreetingSection () {
                             </div>
 
                             <div className="flex flex-col items-end gap-2 lg: gap-3">
-                                <div className="text-4xl lg:text-5xl font-bold text-[#ffffff] leading-none">12</div>
-                                <div className="text-[#8a8a8a] mt-1 text-xs">Position</div>
+                                <div className="text-4xl lg:text-5xl font-bold text-[#ffffff] leading-none">{stats.totalApplicants}</div>
+                                <div className="text-[#8a8a8a] mt-1 text-xs">Candidate</div>
                             </div>
                         </div>
                     

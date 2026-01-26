@@ -1,20 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import JobCard from './JobCard'
 import AddJobCard from './AddJobCard'
 import AddJobModal from './AddJobModal'
-
-interface Job {
-    id: string  // UBAH: Jadi string untuk ID random
-    title: string
-    location: string
-    requirement: string
-    applicants: number
-    deadline: string  // Format: "2026-01-17" (ISO date string)
-    createdAt: string  // Format: "2026-01-11T00:00:00Z"
-    status: boolean
-}
+import { Job } from '../../types/job'
+import { ApiService } from '../../lib/api'
 
 interface JobGridProps {
     sortBy:  string
@@ -25,80 +16,53 @@ export default function JobGrid({ sortBy, searchQuery }: JobGridProps) {
     
     // STATE:  Modal & Jobs Data
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [jobs, setJobs] = useState<Job[]>([
-        {
-            id: 'job-001',
-            title: 'Sr. UX Designer',
-            location: 'Bengaluru',
-            requirement: 'Bachelor Degree',
-            applicants: 45,
-            deadline: '2026-01-17',
-            createdAt: '2026-01-11T00:00:00Z',
-            status:  true
-        },
-        {
-            id: 'job-002',
-            title: 'Growth Manager',
-            location: 'Remote',
-            requirement: 'Bachelor Degree',
-            applicants:  38,
-            deadline: '2026-01-06',
-            createdAt: '2026-01-08T00:00:00Z',
-            status: true
-        },
-        {
-            id: 'job-003',
-            title: 'Financial Analyst',
-            location: 'Mumbai',
-            requirement: 'Master Degree',
-            applicants:  25,
-            deadline: '2026-01-14',
-            createdAt: '2026-01-03T00:00:00Z',
-            status: false
-        },
-        {
-            id: 'job-004',
-            title: 'Security Analyst',
-            location: 'New Delhi',
-            requirement: 'Bachelor Degree',
-            applicants: 105,
-            deadline: '2026-01-19',
-            createdAt: '2025-12-29T00:00:00Z',
-            status:  true
-        },
-        {
-            id: 'job-005',
-            title: 'Product Manager',
-            location: 'Bangalore',
-            requirement: 'Bachelor Degree',
-            applicants:  67,
-            deadline: '2026-01-25',
-            createdAt: '2025-12-24T00:00:00Z',
-            status: true
-        },
-    ])
+    const [jobs, setJobs] = useState<Job[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState('')
 
-    // FUNCTION: Calculate posted days from createdAt
-    const getPostedDays = (createdAt: string): number => {
+    useEffect(() => {
+        fetchJobs()
+    }, [])
+
+    const fetchJobs = async () => {
+        setIsLoading(true)
+        setError('')
+        try {
+            const response = await ApiService.getAllJobs()
+            if(response.success && response.data) {
+                setJobs(response.data)
+            } else {
+                setError(response.error || 'Failed to load jobs')
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to load jobs')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // FUNCTION: Calculate posted days from postedDate
+    const getPostedDays = (postedDate: string): number => {
         const now = new Date()
-        const posted = new Date(createdAt)
+        const posted = new Date(postedDate)
         const diffTime = Math.abs(now.getTime() - posted.getTime())
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
         return diffDays === 0 ? 1 : diffDays
     }
 
     // FUNCTION: Add new job
-    const handleAddJob = (newJob: Omit<Job, 'id' | 'applicants' | 'createdAt' | 'status'>) => {
-        const job: Job = {
-            id: `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Random ID
-            ...newJob,
-            applicants: 0,  // Set awal 0
-            createdAt: new Date().toISOString(),  // Tanggal sekarang
-            status: true,  // Set awal true
+    const handleAddJob = async (newJobData: {title: string; location: string; requirement: string; skills: string; deadline: string}) => {
+        try {
+            const response = await ApiService.createJob(newJobData)
+            if(response.success && response.data) {
+                setJobs(prev => [response.data!, ...prev])
+                setIsModalOpen(false)
+            } else {
+                alert(response.error || 'Failed to create job')
+            }
+        } catch (err: any) {
+            alert(err.message || 'Failed to create job')
         }
-        
-        setJobs(prev => [job, ...prev])  // Tambah di awal (latest)
-        setIsModalOpen(false)
     }
 
     // SORTING & FILTERING Logic
@@ -118,13 +82,13 @@ export default function JobGrid({ sortBy, searchQuery }: JobGridProps) {
         switch (sortBy) {
             case 'Latest': 
                 sorted = [...filtered].sort((a, b) => 
-                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                    new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
                 )
                 break
             
             case 'Oldest': 
                 sorted = [...filtered].sort((a, b) => 
-                    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                    new Date(a.postedDate).getTime() - new Date(b.postedDate).getTime()
                 )
                 break
             
@@ -149,7 +113,7 @@ export default function JobGrid({ sortBy, searchQuery }: JobGridProps) {
     const getColorByJob = (jobId: string): string => {
         // Sort by Latest untuk dapat urutan asli
         const latestSorted = [...jobs].sort((a, b) => 
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
         )
         
         // Cari index di urutan Latest
@@ -158,6 +122,30 @@ export default function JobGrid({ sortBy, searchQuery }: JobGridProps) {
         // Color mapping berdasarkan index (1-based)
         const colors = ['red', 'yellow', 'green', 'blue']
         return colors[index % 4]
+    }
+
+    // look at this, can moved later
+    if(isLoading) {
+        return (
+            <div className='text-center py-12'>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto"></div>
+                <p className="text-gray-400 mt-4">Loading jobs...</p>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-12">
+                <p className="text-red-400">{error}</p>
+                <button 
+                    onClick={fetchJobs}
+                    className="mt-4 px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+                >
+                    Retry
+                </button>
+            </div>
+        )
     }
 
     return (
@@ -172,9 +160,9 @@ export default function JobGrid({ sortBy, searchQuery }: JobGridProps) {
                         key={job.id}
                         jobId={job.id}
                         title={job.title}
-                        postedDays={getPostedDays(job.createdAt)}  // AUTO calculate
+                        postedDays={getPostedDays(job.postedDate)}  // AUTO calculate
                         location={job.location}
-                        requirement={job. requirement}
+                        requirement={job.requirement}
                         applicants={job.applicants}
                         deadline={job.deadline}
                         cardColor={getColorByJob(job.id)}  // AUTO color dari Latest sort

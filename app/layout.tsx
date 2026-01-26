@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Urbanist } from 'next/font/google'
 import './globals.css'
+import { AuthProvider } from '../contexts/AuthContext';
 
 const urbanist = Urbanist({ 
   subsets: ['latin'],
@@ -16,13 +17,15 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
       <body className={urbanist.className}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
-  )
+  );
 }
