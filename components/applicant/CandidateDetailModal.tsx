@@ -1,25 +1,14 @@
 'use client'
 
 import CandidateDetail from './CandidateDetail'
-
-interface Applicant {
-    id: number
-    name: string
-    email:  string
-    phone:  string
-    skills: string[]
-    score: number
-    summary: string
-    aiAnalysis: string
-    position?:  string
-}
+import { Applicant } from '../../types/applicant'
 
 interface CandidateDetailModalProps {
     isOpen: boolean
     onClose: () => void
     applicant: Applicant | null
-    onUpdateCV: (applicantId: number, file: File) => void
-    onDeleteApplicant: (applicantId:  number) => void
+    onUpdateCV: (applicantId: string, file: File) => void
+    onDeleteApplicant:  (applicantId: string) => void
 }
 
 export default function CandidateDetailModal({
@@ -39,7 +28,7 @@ export default function CandidateDetailModal({
                 onClick={onClose}
             />
 
-            {/* Modal Container - FIXED WIDTH */}
+            {/* Modal Container */}
             <div 
                 className="relative h-full animate-slide-in-right"
                 style={{ width: '700px', maxWidth: '90vw' }}
