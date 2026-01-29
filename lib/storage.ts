@@ -19,7 +19,7 @@ export class Storage {
 
   // Get token
   static getToken(): string | null {
-    if (! this.isBrowser()) return null;
+    if (!this.isBrowser()) return null;
     return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   }
 

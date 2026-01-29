@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import CandidateDetailModal from '../../../../components/applicant/CandidateDetailModal'
 import EditJobModal from '../../../../components/jobs/EditJobModal'
 import NotificationModal from '../../../../components/NotificationModal'  
 import { useNotification } from '../../../../hooks/useNotification'
-import { ApiService } from '../../../../lib/api'
+import { JobService, ApplicantService } from '../../../../lib/api'
 import { Job } from '../../../../types/job'
 import { Applicant } from '../../../../types/applicant'
 
@@ -21,40 +21,51 @@ export default function JobDetailPage() {
     const [applicants, setApplicants] = useState<Applicant[]>([])
     const [uploadedCVs, setUploadedCVs] = useState<File[]>([])
     const [searchQuery, setSearchQuery] = useState('')
-    const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null)
+    const [selectedApplicant, setSelectedApplicant] = useState<(Applicant & {originalRank? : number})| null>(null)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
     const [isLoading, setIsLoading] = useState(true)
     const [isUploading, setIsUploading] = useState(false)
     const [error, setError] = useState('')
 
-    useEffect(() => {
-        fetchJobData()
-    }, [])
-
-    const fetchJobData = async () => {
-        setIsLoading(true)
-        setError('')
-
-        try {
-            const jobResponse = await ApiService.getJobById(jobId)
-            if(jobResponse.success && jobResponse.data) {
-                setJob(jobResponse.data)
-            } else {
-                setError('job not found')
-                return
-            } 
-
-            const applicantsResponse = await ApiService.getApplicantsByJobId(jobId)
-            if(applicantsResponse.success && applicantsResponse.data) {
-                setApplicants(applicantsResponse.data)
-            }
-        } catch (err: any){
-            setError(err.message || 'Failed to load job data')
-        } finally {
-            setIsLoading(false)
+    const refreshData = useCallback(async () => {
+        if(!jobId) {
+            setError('invalid job id')
+            return
         }
-    }
+        
+        try {
+            setError('')
+            const [jobRes, appRes] = await Promise.all([
+                JobService.getById(jobId),
+                ApplicantService.getByJobId(jobId)
+            ])
+
+            if(jobRes.success && jobRes.data) {
+                setJob(jobRes.data)
+            }
+
+            if(appRes.success && appRes.data) {
+                setApplicants(appRes.data)
+            }
+        } catch (err) {
+            console.error('Failed to refresh data', err)
+            setError(err.message || 'failed to load data')
+        }
+    }, [jobId])
+
+    useEffect (() => {
+        let isMounted = true
+        
+        const initData = async () => {
+            setIsLoading(true)
+            await refreshData()
+            if(isMounted) setIsLoading(false)
+        }
+
+        initData()
+        return () => { isMounted = false }
+    }, [refreshData])
 
     const displayedApplicants = useMemo(() => {
         const sortedWithRanking = [... applicants]
@@ -94,26 +105,29 @@ export default function JobDetailPage() {
 
         setIsUploading(true)
         try {
-            const response = await ApiService.uploadCVs(jobId, uploadedCVs)
+            const response = await ApplicantService.uploadCVs(jobId, uploadedCVs)
             
-            if (response.success && response.data) {
-                // Add new applicants to list
-                setApplicants(prev => [...response.data!, ...prev])
+            if(response.success) {
+                console.log('Upload success, refreshing data...')
                 setUploadedCVs([])
-
-                showSuccess(
-                    'CVs Processed Successfully!',
-                    `${uploadedCVs.length} CV(s) have been processed and applicants added.`
-                )
-                
-                // Refresh job to update applicant count
-                const jobResponse = await ApiService.getJobById(jobId)
-                if (jobResponse.success && jobResponse.data) {
+    
+                const applicantsResponse = await ApplicantService.getByJobId(jobId)
+                if(applicantsResponse.success && applicantsResponse.data) {
+                    console.log(`Refreshed: ${applicantsResponse.data.length} applicants`)
+                    setApplicants(applicantsResponse.data)
+                }
+    
+                const jobResponse = await JobService.getById(jobId)
+                if(jobResponse.success && jobResponse.data) {
+                    console.log('refreshed job data')
                     setJob(jobResponse.data)
                 }
+    
+                showSuccess('CVs Processed Successfully!', response.message || `${uploadedCVs.length} CV(s) uploaded`)
             } else {
                 showError('Processing Failed', response.error || 'Failed to process CVs')
             }
+
         } catch (err: any) {
             showError('Upload Error', err.message || 'Failed to upload CVs')
         } finally {
@@ -121,33 +135,50 @@ export default function JobDetailPage() {
         }
     }
 
+    // replace existing handleUpdateCV with this (app/dashboard/jobs/[id]/page.tsx)
     const handleUpdateCV = async (applicantId: string, file: File) => {
-        try {
-            const response = await ApiService.updateApplicantCV(applicantId.toString(), file)
-            
-            if (response.success && response.data) {
-                // Update applicant in list
-                setApplicants(prev => 
-                    prev.map(app => app.id === applicantId.toString() ? response.data!  : app)
-                )
-                
-                // Update selected applicant if it's the same one
-                if (selectedApplicant?.id === applicantId.toString()) {
-                    setSelectedApplicant(response.data)
-                }
-                
-                showSuccess('CV Updated!', 'The CV has been successfully updated and reprocessed.')
-            } else {
-                showError('Update Failed', response.error || 'Failed to update CV')
-            }
-        } catch (err: any) {
-            showError('Update Error', err.message || 'Failed to update CV')
+    try {
+        setIsUploading(true) // optional, reuse an uploading state or create new
+        console.log('🔄 Updating CV for', applicantId)
+
+        const response = await ApplicantService.updateCV(applicantId, file)
+        console.log('updateCV response:', response)
+
+        if (response.success) {
+        // REFRESH full applicant list (reliable)
+        const applicantsResponse = await ApplicantService.getByJobId(jobId)
+        if (applicantsResponse.success && applicantsResponse.data) {
+            setApplicants(applicantsResponse.data)
+            // set selected applicant to the updated one from fresh list
+            const updated = applicantsResponse.data.find(a => String(a.id) === String(applicantId))
+            setSelectedApplicant(updated ?? null)
         }
+
+        
+        // refresh job counts if needed
+        const jobResponse = await JobService.getById(jobId)
+        if (jobResponse.success && jobResponse.data) {
+            setJob(jobResponse.data)
+        }
+
+        showSuccess('CV Updated', 'Data analysis has been refreshed!')
+        return response.data
+        } else {
+        showError('Update Failed', response.error || 'Failed to update CV')
+        return null
+        }
+    } catch (err: any) {
+        console.error('handleUpdateCV error:', err)
+        showError('Error', err.message || 'Failed to update CV')
+        throw err
+    } finally {
+        setIsUploading(false)
+    }
     }
 
     const handleDeleteApplicant = async (applicantId:  string) => {
         try {
-            const response = await ApiService.deleteApplicant(applicantId.toString())
+            const response = await ApplicantService.delete(applicantId.toString())
             
             if (response.success) {
                 // Remove from list
@@ -156,7 +187,7 @@ export default function JobDetailPage() {
                 showSuccess('Applicant Deleted', 'The applicant has been successfully removed.')
                 
                 // Refresh job to update applicant count
-                const jobResponse = await ApiService.getJobById(jobId)
+                const jobResponse = await JobService.getById(jobId)
                 if (jobResponse.success && jobResponse. data) {
                     setJob(jobResponse.data)
                 }
@@ -171,12 +202,12 @@ export default function JobDetailPage() {
     const handleEditJob = async (updates: {
         title: string
         location: string
-        requirement: string
+        min_education: string
         skills: string
         deadline: string
     }) => {
         try {
-            const response = await ApiService.updateJob(jobId, updates)
+            const response = await JobService.update(jobId, updates)
             if (response.success && response.data) {
                 setJob(response.data)
                 setIsEditModalOpen(false)
@@ -193,8 +224,8 @@ export default function JobDetailPage() {
         return (
             <div className="min-h-screen bg-[#151515] flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
-                    <p className="text-gray-400">Loading job details...</p>
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-400 mx-auto"></div>
+                    <p className="text-gray-400 mt-4">Loading job details...</p>
                 </div>
             </div>
         )
@@ -204,10 +235,11 @@ export default function JobDetailPage() {
         return (
             <div className="min-h-screen bg-[#151515] flex items-center justify-center">
                 <div className="text-center">
-                    <p className="text-red-400 mb-4">{error || 'Job not found'}</p>
-                    <button 
+                    <h2 className="text-2xl font-bold text-white mb-2">Job Not Found</h2>
+                    <p className="text-gray-400 mb-6">{error || 'The job you are looking for does not exist.'}</p>
+                    <button
                         onClick={() => router.push('/dashboard')}
-                        className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+                        className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-medium transition-colors"
                     >
                         Back to Dashboard
                     </button>
@@ -361,16 +393,16 @@ export default function JobDetailPage() {
                             </div>
                         ) :
                         (
-                        displayedApplicants.map((applicant) => (
+                        displayedApplicants.map((applicant, index) => (
                                 <div 
-                                    key={applicant. id}
+                                    key={applicant.id + index}
                                     onClick={() => setSelectedApplicant(applicant)}
                                     className="flex justify-between py-4 px-4 hover:bg-[#151515] cursor-pointer transition-colors rounded-lg"
                                 >
                                     <div className="text-center text-white flex-1/10">{applicant.originalRank}</div>
                                     <div className="text-center text-white flex-4/10">{applicant.name}</div>
                                     <div className="text-center text-white flex-4/10">{applicant.email}</div>
-                                    <div className="text-center text-white flex-1/10 font-semibold">{applicant.score}</div>
+                                    <div className="text-center text-white flex-1/10 font-semibold">{applicant.score}<span className='text-yellow-500'>/100</span></div>
                                 </div>
                             ))
                         )}
@@ -379,16 +411,17 @@ export default function JobDetailPage() {
             </div>
 
             <CandidateDetailModal 
+                key={selectedApplicant?.id || 'modal'} 
                 isOpen={selectedApplicant !== null}
                 onClose={() => setSelectedApplicant(null)}
-                applicant={selectedApplicant}
+                applicant={selectedApplicant} 
                 onUpdateCV={handleUpdateCV}
                 onDeleteApplicant={handleDeleteApplicant}
             />
 
             <EditJobModal 
                 isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
                 job={job}
                 onSubmit={handleEditJob}
             />

@@ -3,7 +3,11 @@
 import { useState } from "react"
 import JobGrid from "./JobGrid"
 
-export default function JobSection() {
+interface JobSectionProps {
+    onJobUpdate: () => void
+}
+
+export default function JobSection({ onJobUpdate } : JobSectionProps) {
     const [sortBy, setSortBy] = useState('Latest')
     const [searchQuery, setSearchQuery] = useState('')
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -85,7 +89,7 @@ export default function JobSection() {
             </div>
 
             {/* Job Cards Grid */}
-            <JobGrid sortBy={sortBy} searchQuery={searchQuery} />
+            <JobGrid sortBy={sortBy} searchQuery={searchQuery} onJobUpdate={onJobUpdate} />
         </section>
     )
 }

@@ -10,20 +10,21 @@ interface EditJobModalProps {
     onSubmit: (updates: {
         title: string
         location: string
-        requirement: string
+        min_education: string
         skills: string
         deadline: string
-    }) => void
+    }) => Promise<void>
 }
 
 export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJobModalProps) {
     const [formData, setFormData] = useState({
         title: '',
         location: '',
-        requirement: '',
+        min_education: '',
         skills: '',
         deadline: '',
     })
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Pre-fill form ketika job berubah
     useEffect(() => {
@@ -31,33 +32,52 @@ export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJob
             setFormData({
                 title: job.title,
                 location: job.location,
-                requirement: job.requirement,
+                min_education: job.min_education,
                 skills: job.skills,
                 deadline: job.deadline,
             })
         }
     }, [job])
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
         
         // Validation
-        if (!formData.title || !formData.location || !formData.requirement || !formData.skills || !formData.deadline) {
+        if (!formData.title || !formData.location || !formData.min_education || !formData.skills || !formData.deadline) {
             alert('Please fill all fields!')
             return
         }
 
-        onSubmit(formData)
+        setIsSubmitting(true)
+        try{
+            await onSubmit(formData)
+        } catch (error) {
+            console.error('Edit job error: ', error)
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
-    if (!isOpen || !job) return null
+    const handleClose = () => {
+        if(!isSubmitting) {
+            onClose()
+        }
+    }
+
+    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if(e.target === e.currentTarget && !isSubmitting) {
+            onClose()
+        }
+    }
+
+    if(!isOpen || !job) return null
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-                onClick={onClose}
+                onClick={handleBackdropClick}
             />
 
             {/* Modal Content */}
@@ -67,7 +87,9 @@ export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJob
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-white">Edit Job</h2>
                     <button 
-                        onClick={onClose}
+                        type='button'
+                        onClick={handleClose}
+                        disabled={isSubmitting}
                         className="p-2 rounded-full bg-[#ffffff]/10 hover:bg-[#ffffff]/20 transition-colors"
                     >
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,6 +111,7 @@ export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJob
                             value={formData.title}
                             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                             placeholder="e.g. Senior UX Designer"
+                            disabled={isSubmitting}
                             className="w-full px-4 py-3 bg-[#151515] border border-gray-800/50 rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-gray-700 transition-colors"
                             required
                         />
@@ -104,20 +127,22 @@ export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJob
                             value={formData.location}
                             onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                             placeholder="e.g. Bengaluru, Remote, Mumbai"
+                            disabled={isSubmitting}
                             className="w-full px-4 py-3 bg-[#151515] border border-gray-800/50 rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-gray-700 transition-colors"
                             required
                         />
                     </div>
 
-                    {/* Requirement (Education) */}
+                    {/* min_education (Education) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                             Minimum Education <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                             <select
-                                value={formData.requirement}
-                                onChange={(e) => setFormData(prev => ({ ...prev, requirement: e.target.value }))}
+                                value={formData.min_education}
+                                disabled={isSubmitting}
+                                onChange={(e) => setFormData(prev => ({ ...prev, min_education: e.target.value }))}
                                 className="w-full px-4 py-3 pr-12 bg-[#151515] border border-gray-800/50 rounded-lg text-white focus:outline-none focus:border-gray-700 transition-colors appearance-none cursor-pointer"
                                 required
                             >
@@ -143,6 +168,7 @@ export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJob
                         </label>
                         <textarea
                             value={formData.skills}
+                            disabled={isSubmitting}
                             onChange={(e) => setFormData(prev => ({ ...prev, skills: e.target.value }))}
                             placeholder="e.g. Marketing, Analytics, Growth Hacking, SEO, Data Analysis"
                             rows={3}
@@ -163,6 +189,7 @@ export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJob
                             <input
                                 type="date"
                                 value={formData.deadline}
+                                disabled={isSubmitting}
                                 onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
                                 min={new Date().toISOString().split('T')[0]}
                                 className="w-full px-4 py-3 pr-12 bg-[#151515] border border-gray-800/50 rounded-lg text-white focus:outline-none focus:border-gray-700 transition-colors
@@ -186,16 +213,18 @@ export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJob
                     <div className="flex items-center gap-4 pt-4">
                         <button
                             type="button"
-                            onClick={onClose}
-                            className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-all"
+                            onClick={handleClose}
+                            disabled={isSubmitting}
+                            className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-all cursor-pointer"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-6 py-3 bg-[#151515] hover:bg-[#000000] text-white font-semibold rounded-lg transition-all"
+                            disabled={isSubmitting}
+                            className="flex-1 px-6 py-3 bg-[#151515] hover:bg-[#000000] text-white font-semibold rounded-lg transition-all cursor-pointer"
                         >
-                            Save Changes
+                            {isSubmitting ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>
                 </form>
