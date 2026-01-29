@@ -50,55 +50,55 @@ let mockJobs: Job[] = [
     id: 'job-001',
     title: 'Sr. UX Designer',
     location: 'Bengaluru',
-    requirement: 'Bachelor Degree',
+    min_education: 'Bachelor Degree',
     skills: 'UI/UX Design, Figma, User Research, Prototyping',
     deadline: '2026-01-17',
     postedDate: '2026-01-11T00:00:00Z',
-    status: true,
+    is_open: true,
     applicants: 45,
   },
   {
     id:  'job-002',
     title: 'Growth Manager',
     location: 'Remote',
-    requirement: 'Bachelor Degree',
+    min_education: 'Bachelor Degree',
     skills: 'Marketing, Analytics, Growth Hacking, SEO',
     deadline: '2026-01-06',
     postedDate: '2026-01-08T00:00:00Z',
-    status: true,
+    is_open: true,
     applicants: 38,
   },
   {
     id: 'job-003',
     title: 'Financial Analyst',
     location: 'Mumbai',
-    requirement: 'Master Degree',
+    min_education: 'Master Degree',
     skills: 'Financial Modeling, Excel, Data Analysis, Forecasting',
     deadline: '2026-01-14',
     postedDate: '2026-01-03T00:00:00Z',
-    status: false,
+    is_open: false,
     applicants: 25,
   },
   {
     id: 'job-004',
     title: 'Security Analyst',
     location: 'New Delhi',
-    requirement: 'Bachelor Degree',
+    min_education: 'Bachelor Degree',
     skills:  'Cybersecurity, Network Security, Penetration Testing',
     deadline: '2026-01-19',
     postedDate: '2025-12-29T00:00:00Z',
-    status: true,
+    is_open: true,
     applicants: 105,
   },
   {
     id: 'job-005',
     title: 'Product Manager',
     location: 'Bangalore',
-    requirement: 'Bachelor Degree',
+    min_education: 'Bachelor Degree',
     skills: 'Product Strategy, Agile, Roadmapping, Stakeholder Management',
     deadline: '2026-01-25',
     postedDate: '2025-12-24T00:00:00Z',
-    status: true,
+    is_open: true,
     applicants: 67,
   },
 ];
@@ -110,7 +110,7 @@ let mockApplicants: Applicant[] = [
     name: 'Muhammad Zaki Azhar',
     email: 'zakiazhar04@gmail.com',
     phone: '+62 812-3456-7890',
-    skills: ['Marketing', 'Analytics', 'SEO', 'Growth Hacking'],
+    skills: 'Marketing, Analytics, SEO, Growth Hacking',
     score: 9.8,
     position: 'Growth Specialist',
     summary: 'Experienced growth marketer with 5 years of expertise in digital marketing and analytics. Led growth initiatives that resulted in 300% user acquisition increase.',
@@ -124,7 +124,7 @@ let mockApplicants: Applicant[] = [
     name: 'Muhammad Najmi Azhar',
     email: 'najmi@example.com',
     phone: '+62 813-9876-5432',
-    skills: ['Marketing', 'Data Analysis', 'A/B Testing'],
+    skills: 'Marketing, Data Analysis, A/B Testing',
     score: 9.2,
     position: 'Marketing Analyst',
     summary: 'Data-driven marketer with strong analytical background.',
@@ -341,7 +341,7 @@ export class MockDatabase {
   static createJob(jobData: {
     title: string;
     location: string;
-    requirement:  string;
+    min_education:  string;
     skills: string;
     deadline: string;
   }): Job {
@@ -349,11 +349,11 @@ export class MockDatabase {
       id: `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title: jobData.title,
       location: jobData.location,
-      requirement: jobData.requirement,
+      min_education: jobData.min_education,
       skills: jobData.skills,
       deadline: jobData.deadline,
       postedDate: new Date().toISOString(),
-      status: true,
+      is_open: true,
       applicants: 0,
     };
 
@@ -389,13 +389,13 @@ export class MockDatabase {
     return false;
   }
 
-  // Toggle job status
-  static toggleJobStatus(jobId: string): Job | null {
+  // Toggle job is_open
+  static toggleJobis_open(jobId: string): Job | null {
     const job = mockJobs.find(j => j.id === jobId);
     if (!job) return null;
 
-    job.status = !job.status;
-    console.log('✅ Mock DB: Job status toggled:', job);
+    job.is_open = !job.is_open;
+    console.log('✅ Mock DB: Job is_open toggled:', job);
     return job;
   }
 
@@ -403,8 +403,8 @@ export class MockDatabase {
   static getJobStats(): { totalJobs: number; openJobs: number; closedJobs: number; totalApplicants: number } {
     return {
       totalJobs: mockJobs.length,
-      openJobs: mockJobs.filter(j => j.status === true).length,
-      closedJobs: mockJobs.filter(j => j.status === false).length,
+      openJobs: mockJobs.filter(j => j.is_open === true).length,
+      closedJobs: mockJobs.filter(j => j.is_open === false).length,
       totalApplicants: mockJobs.reduce((sum, job) => sum + job.applicants, 0),
     };
   }
@@ -426,41 +426,53 @@ export class MockDatabase {
 
   // Simulate CV Processing (Mock AI processing)
   static async processCVs(jobId: string, cvFiles: File[]): Promise<Applicant[]> {
-    // simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    console.log(`🎭 Mock DB: Processing ${cvFiles.length} CVs for job ${jobId}`);
 
-    const job = this.getJobById(jobId)
-    if(!job) throw new Error('job not found')
+    const job = this.getJobById(jobId);
+    if (!job) throw new Error('Job not found');
+
+    // Simulate AI processing delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     const newApplicants: Applicant[] = cvFiles.map((file, index) => {
-      const baseName = file.name.replace('.pdf', '').replace(/_/g, '')
-      const randomScore = (Math.random() * 2 + 8).toFixed(1)
+      const mockNames = ['John Doe', 'Jane Smith', 'Alex Johnson', 'Maria Garcia', 'Tom Wilson'];
+      const mockEmails = ['john@example.com', 'jane@example.com', 'alex@example.com', 'maria@example.com', 'tom@example.com'];
+      const mockSkills = [
+        'JavaScript, React, Node.js',  // ✅ STRING
+        'Python, Django, PostgreSQL',  // ✅ STRING
+        'Java, Spring Boot, MySQL',  // ✅ STRING
+        'C#, .NET, Azure',  // ✅ STRING
+        'Go, Docker, Kubernetes',  // ✅ STRING
+      ];
+
+      const randomIndex = Math.floor(Math.random() * mockNames.length);
 
       return {
         id: `app-${Date.now()}-${index}`,
-        jobId:  jobId,
-        name: baseName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-        email: `${baseName.toLowerCase().replace(/ /g, '.')}@example.com`,
-        phone: `+62 81${Math.floor(Math.random() * 10)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-        skills: job.skills.split(',').map(s => s.trim()).slice(0, 3 + Math.floor(Math.random() * 2)),
-        score: parseFloat(randomScore),
-        position: `${job.title} Candidate`,
-        summary: `Experienced professional with relevant background in ${job.title}.  Demonstrates strong capabilities in required skills and shows excellent potential for the role.`,
-        aiAnalysis: `AI Analysis: This candidate shows strong match for the ${job. title} position. Skills alignment is high, and experience level matches requirements.`,
+        jobId,
+        name: mockNames[randomIndex],
+        email: mockEmails[randomIndex],
+        phone: `+62 8${Math.floor(Math.random() * 1000000000)}`,
+        skills: mockSkills[randomIndex],  // ✅ STRING
+        score: Math.floor(Math.random() * 30 + 70) / 10,
+        position: job.title,
+        summary: `Experienced professional with ${Math.floor(Math.random() * 5 + 3)} years in the industry.`,
+        aiAnalysis: `Good fit for ${job.title}. Skills match ${Math.floor(Math.random() * 30 + 70)}% of requirements.`,
         cvFileName: file.name,
-        uploadedAt: new Date().toISOString()  
-      }
-    })
+        uploadedAt: new Date().toISOString(),
+      };
+    });
 
-    mockApplicants.push(...newApplicants)
+    mockApplicants.push(...newApplicants);
 
-    // update job applicants count
-    const updatedJob = this.getJobById(jobId)
-    if(updatedJob) {
-      updatedJob.applicants = this.getApplicantsByJobId(jobId).length
+    // Update job applicant count
+    const jobIndex = mockJobs.findIndex(j => j.id === jobId);
+    if (jobIndex !== -1) {
+      mockJobs[jobIndex].applicants = (mockJobs[jobIndex].applicants || 0) + newApplicants.length;
     }
-    
-    return newApplicants
+
+    console.log(`✅ Mock DB: Processed ${newApplicants.length} applicants`);
+    return newApplicants;
   }
 
   // update applicant CV

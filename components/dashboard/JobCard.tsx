@@ -9,18 +9,18 @@ interface JobCardProps {
     location: string
     postedDays: number
     deadline: string
-    requirement: string
+    min_education: string
     applicants: number
     cardColor: string
     status: boolean
 }
 
 export default function JobCard({
-    jobId,  // TAMBAHAN
+    jobId, 
     title,
     postedDays,
     location,
-    requirement,
+    min_education,
     applicants,
     deadline,
     cardColor
@@ -99,7 +99,7 @@ export default function JobCard({
                     </button>
                 </div>
 
-                {/* Location + requirement */}
+                {/* Location + min_education */}
                 <div className="flex flex-wrap items-center gap-2 mb-4 lg:mb-6">
                     <span className='bg-[#282828] py-1.5 lg:py-2 px-3 lg:px-4 flex items-center gap-1 text-[#898989] font-medium rounded-2xl text-xs'>
                         <Image 
@@ -119,7 +119,7 @@ export default function JobCard({
                             height={16}
                             className="w-3.5 lg:w-4 flex-shrink-0"
                         />
-                        <span className="truncate">{requirement}</span>
+                        <span className="truncate">{min_education}</span>
                     </span>
                 </div>
 

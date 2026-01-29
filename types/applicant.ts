@@ -1,35 +1,23 @@
-// Applicant Types
+// Applicant Types - UPDATED BASED ON REAL API
 
 export interface Applicant {
   id: string;
   jobId: string;
-  name:  string;
+  name: string;
   email: string;
   phone: string;
-  skills: string[];
-  score:  number;
+  skills: string;
   summary: string;
   aiAnalysis: string;
-  position?: string;
-  cvFileName?: string;
+  score: number;
+  cvFileName: string;
   uploadedAt: string;
-}
-
-export interface UploadCVsRequest {
-  jobId: string;
-  cvFiles: File[];
-}
-
-export interface UploadCVsResponse {
-  success: boolean;
-  data?:  Applicant[];
-  message?: string;
-  error?: string;
+  position?: string;
 }
 
 export interface ApplicantResponse {
   success: boolean;
-  data?:  Applicant;
+  data?: Applicant;
   message?: string;
   error?: string;
 }
@@ -41,14 +29,16 @@ export interface ApplicantsResponse {
   error?: string;
 }
 
-export interface UpdateCVRequest {
-  applicantId: string;
-  cvFile: File;
+export interface UploadCVsResponse {
+  success: boolean;
+  data?: Applicant[]; 
+  message?: string;
+  error?: string;
 }
 
 export interface UpdateCVResponse {
   success: boolean;
-  data?:  Applicant;
-  message?:  string;
+  data?: Applicant;
+  message?: string;
   error?: string;
 }

@@ -4,11 +4,12 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ApiService } from '../../../lib/api';
+import { AuthService } from '../../../lib/api';
+import { getCroppedImg } from '../../../utils/canvasUtils';
+import Cropper from 'react-easy-crop';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -17,10 +18,19 @@ export default function RegisterPage() {
     password: ''
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showPassword, setShowPassword] = useState(false)
+
+  // state photo & crop
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [imageSrc, setImageSrc] = useState<string | null>(null)
+  const [crop, setCrop] = useState({ x: 0, y: 0})
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,16 +40,17 @@ export default function RegisterPage() {
     
     try {
       const formDataToSend = new FormData();
+      console.log('photoFile state', photoFile)
       formDataToSend.append('name', formData.name);
       formDataToSend.append('email', formData.email);
       formDataToSend.append('username', formData.username);
-      formDataToSend. append('password', formData.password);
+      formDataToSend.append('password', formData.password);
       
       if (photoFile) {
         formDataToSend.append('photo', photoFile);
       }
 
-      const response = await ApiService.register(formDataToSend);
+      const response = await AuthService.register(formDataToSend);
       
       if (response.success) {
         setSuccess('Registration successful!  Redirecting to login...');
@@ -69,25 +80,41 @@ export default function RegisterPage() {
   const handlePhotoChange = (e: React. ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('File size must be less than 5MB');
-        return;
-      }
-
-      if (! file.type.startsWith('image/')) {
-        setError('File must be an image');
-        return;
-      }
-
-      setPhotoFile(file);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      const reader = new FileReader()
+      reader.addEventListener('load', () => {
+        setImageSrc(reader.result as string)
+        setIsCropModalOpen(true)
+      })
+      reader.readAsDataURL(file)
     }
   };
+
+  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels)
+  }
+
+  const handleSaveCrop = async () => {
+    try {
+      if(imageSrc && croppedAreaPixels) {
+        const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels)
+        console.log('croppedBlob', croppedImageBlob)
+
+        if(croppedImageBlob) {
+          // preview dari crop nya
+          const croppedImageUrl = URL.createObjectURL(croppedImageBlob)
+          setPhotoPreview(croppedImageUrl)
+
+          const file = new File([croppedImageBlob], "profile_cropped.jpg", {type: "image/jpeg"})
+          console.log('photoFile', file, file.size, file.type)
+          setPhotoFile(file)
+          setIsCropModalOpen(false)
+        }
+      }
+    } catch(e) {
+      console.error(e)
+
+    }
+  }
 
   const handlePhotoClick = () => {
     fileInputRef.current?.click();
@@ -147,6 +174,7 @@ export default function RegisterPage() {
               <div 
                 onClick={handlePhotoClick}
                 className="relative w-30 h-30 rounded-full bg-gray-700/50 border-2 border-dashed border-gray-400 hover:border-cyan-400 cursor-pointer transition-all overflow-hidden group"
+                style= {{width: '120px', height: '120px'}}
               >
                 {photoPreview ?  (
                   <>
@@ -164,7 +192,7 @@ export default function RegisterPage() {
                       }}
                       className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
                     >
-                      Change Photo
+                      Remove
                     </button>
                   </>
                 ) : (
@@ -189,10 +217,69 @@ export default function RegisterPage() {
               <p className="text-gray-400 text-xs mt-2">Optional (Max 5MB)</p>
             </div>
 
+            { isCropModalOpen && (
+              <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4'>
+                <div className='bg-[#1e1e1e] rounded-xl w-full max-w-md overflow-hidden flex flex-col h-[500px]'>
+                   
+                   {/* header */}
+                  <div className='p-4 border-b border-gray-700 flex justify-between items-center'>
+                    <h3 className="text-white font-semibold">Adjust Photo</h3>
+                    <button onClick={() => setIsCropModalOpen(false)} className="text-gray-400 hover:text-white">X</button>
+                  </div>
+
+                  {/* area crop */}
+                  <div className="relative flex-1 bg-black">
+                    <Cropper 
+                      image={imageSrc || ''}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1} //rasio 1:1
+                      onCropChange={setCrop}
+                      onCropComplete={onCropComplete}
+                      onZoomChange={setZoom}
+                    />
+                  </div>
+
+                  {/* Footer / Controls */}
+                  <div className="p-4 bg-[#1e1e1e] space-y-4">
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs text-gray-400">Zoom</span>
+                      <input
+                        type="range"
+                        value={zoom}
+                        min={1}
+                        max={3}
+                        step={0.1}
+                        aria-labelledby="Zoom"
+                        onChange={(e) => setZoom(Number(e.target.value))}
+                        className="w-full accent-cyan-400 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setIsCropModalOpen(false)}
+                        className="flex-1 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-800 transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveCrop}
+                        className="flex-1 py-2 rounded-lg bg-cyan-500 text-black font-semibold hover:bg-cyan-400 transition"
+                      >
+                        Save Photo
+                      </button>
+                    </div>
+                  </div>
+                    
+                </div>
+              </div>
+            )}
+
             {/* Nama Lengkap Input */}
             <div className="relative">
               <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                <Image src='/icons/nama.png' alt='user' width={30} height={30} />
+                <Image src='/icons/name.png' alt='user' width={30} height={30} />
               </div>
               <input
                 type="text"
@@ -246,7 +333,7 @@ export default function RegisterPage() {
                 <Image src='/icons/lock.png' alt='password' width={30} height={30} />
               </div>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Password"
                 value={formData.password}
@@ -256,6 +343,23 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 minLength={6}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"
+              >
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                  </svg>
+                )
+                }
+              </button>
             </div>
 
             {/* Sign Up Button */}

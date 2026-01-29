@@ -8,7 +8,7 @@ interface AddJobModalProps {
     onSubmit: (job: {
         title: string
         location: string
-        requirement: string
+        min_education: string
         skills: string  // TAMBAHAN
         deadline: string
     }) => void
@@ -18,7 +18,7 @@ export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalP
     const [formData, setFormData] = useState({
         title:  '',
         location: '',
-        requirement: '',
+        min_education: '',
         skills: '',  // TAMBAHAN
         deadline:  '',
     })
@@ -27,7 +27,7 @@ export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalP
         e.preventDefault()
         
         // Validation
-        if (!formData.title || !formData.location || !formData.requirement || !formData.skills || !formData.deadline) {
+        if (!formData.title || !formData.location || !formData.min_education || !formData.skills || !formData.deadline) {
             alert('Please fill all fields!')
             return
         }
@@ -38,7 +38,7 @@ export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalP
         setFormData({
             title: '',
             location: '',
-            requirement:  '',
+            min_education:  '',
             skills: '',  // TAMBAHAN
             deadline:  '',
         })
@@ -100,15 +100,15 @@ export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalP
                         />
                     </div>
 
-                    {/* Requirement (Education) */}
+                    {/* min_education (Education) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                             Minimum Education <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                             <select
-                                value={formData.requirement}
-                                onChange={(e) => setFormData(prev => ({ ... prev, requirement: e.target. value }))}
+                                value={formData.min_education}
+                                onChange={(e) => setFormData(prev => ({ ... prev, min_education: e.target. value }))}
                                 className="w-full px-4 py-3 pr-12 bg-[#151515] border border-gray-800/50 rounded-lg text-white focus:outline-none focus:border-gray-700 transition-colors appearance-none cursor-pointer"
                                 required
                             >

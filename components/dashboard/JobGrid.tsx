@@ -5,14 +5,15 @@ import JobCard from './JobCard'
 import AddJobCard from './AddJobCard'
 import AddJobModal from './AddJobModal'
 import { Job } from '../../types/job'
-import { ApiService } from '../../lib/api'
+import { JobService } from '../../lib/api'
 
 interface JobGridProps {
     sortBy:  string
     searchQuery: string
+    onJobUpdate?: () => void
 }
 
-export default function JobGrid({ sortBy, searchQuery }: JobGridProps) {
+export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridProps) {
     
     // STATE:  Modal & Jobs Data
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -28,7 +29,7 @@ export default function JobGrid({ sortBy, searchQuery }: JobGridProps) {
         setIsLoading(true)
         setError('')
         try {
-            const response = await ApiService.getAllJobs()
+            const response = await JobService.getAll()
             if(response.success && response.data) {
                 setJobs(response.data)
             } else {
@@ -51,12 +52,16 @@ export default function JobGrid({ sortBy, searchQuery }: JobGridProps) {
     }
 
     // FUNCTION: Add new job
-    const handleAddJob = async (newJobData: {title: string; location: string; requirement: string; skills: string; deadline: string}) => {
+    const handleAddJob = async (newJobData: {title: string; location: string; min_education: string; skills: string; deadline: string}) => {
         try {
-            const response = await ApiService.createJob(newJobData)
+            const response = await JobService.create(newJobData)
             if(response.success && response.data) {
                 setJobs(prev => [response.data!, ...prev])
                 setIsModalOpen(false)
+
+                if(onJobUpdate) {
+                    onJobUpdate()
+                }
             } else {
                 alert(response.error || 'Failed to create job')
             }
@@ -162,11 +167,11 @@ export default function JobGrid({ sortBy, searchQuery }: JobGridProps) {
                         title={job.title}
                         postedDays={getPostedDays(job.postedDate)}  // AUTO calculate
                         location={job.location}
-                        requirement={job.requirement}
+                        min_education={job.min_education}
                         applicants={job.applicants}
                         deadline={job.deadline}
                         cardColor={getColorByJob(job.id)}  // AUTO color dari Latest sort
-                        status={job.status}
+                        status={job.is_open || false}
                     />
                 ))}
             </div>

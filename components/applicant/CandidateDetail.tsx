@@ -26,6 +26,10 @@ export default function CandidateDetail({
     const [isUpdating, setIsUpdating] = useState(false)
     const { confirmation, showConfirmation, close: closeConfirmation, handleConfirm } = useConfirmation() 
 
+    const skillsArray = applicant.skills
+        ? applicant.skills.split(',').map(s => s.trim()).filter(s => s.length > 0)
+        : []
+
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
@@ -69,13 +73,13 @@ export default function CandidateDetail({
         <>
             <div className="bg-[#151515] h-full overflow-y-auto no-scrollbar">
                 
-                {/* Header - STYLE TETAP SAMA */}
+                {/* Header */}
                 <div className={`top-0 p-6 flex items-center justify-between z-10 ${isModal ? '' : 'border-b-2'}`}>
                     <h2 className="text-3xl font-bold text-white">Candidate Details</h2>
                     {isModal && onClose && (
                         <button 
                             onClick={onClose}
-                            className="p-2 md:p-3 rounded-full bg-[#1e1e1e] hover: bg-white/10 transition-colors"
+                            className="p-2 md:p-3 rounded-full bg-[#1e1e1e] hover: bg-white/10 transition-colors cursor-pointer"
                         >
                             <Image 
                                 src="/icons/cancel.png"
@@ -87,7 +91,7 @@ export default function CandidateDetail({
                     )}
                 </div>
 
-                {/* Content - STYLE TETAP SAMA */}
+                {/* Content */}
                 <div className="px-6 pb-6 space-y-6">
                     
                     {/* Profile Card */}
@@ -140,7 +144,7 @@ export default function CandidateDetail({
                             {onUpdateCV && onDeleteApplicant && (
                                 <div className="flex justify-center gap-6">
                                     <button 
-                                        onClick={() => setIsUpdateCVMode(! isUpdateCVMode)}
+                                        onClick={() => setIsUpdateCVMode(!isUpdateCVMode)}
                                         className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#262626] hover:bg-[#2f2f2f] cursor-pointer rounded-2xl transition-colors"
                                         disabled={isUpdating}
                                     >
@@ -201,7 +205,7 @@ export default function CandidateDetail({
                                     )}
                                     <button
                                         onClick={handleUpdateCV}
-                                        disabled={! newCVFile || isUpdating}
+                                        disabled={!newCVFile || isUpdating}
                                         className="w-full px-4 py-2 mt-2 bg-[#1f1f1f] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
                                     >
                                         {isUpdating ? 'Processing...' : 'Confirm Update'}
@@ -220,14 +224,18 @@ export default function CandidateDetail({
                         <div className="relative p-4 space-y-4">
                             <h4 className="text-2xl font-semibold text-white">Skill</h4>
                             <div className="flex flex-wrap gap-2">
-                                {applicant.skills. map((skill, index) => (
-                                    <span 
-                                        key={index}
-                                        className="py-2 px-4 bg-[#262626] text-gray-300 text-base rounded-full"
-                                    >
-                                        {skill}
-                                    </span>
-                                ))}
+                                {skillsArray.length > 0 ? (
+                                    skillsArray.map((skill, index) => (
+                                        <span
+                                            key={index}
+                                            className='py-2 px-4 bg-[#262626] text-gray-300 text-base rounded-full'
+                                        >
+                                            {skill}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <p className='text-gray-500'>No skills listed</p>
+                                )}
                             </div>
                         </div>
                     </div>

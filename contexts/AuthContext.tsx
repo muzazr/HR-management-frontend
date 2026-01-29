@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types/auth';
 import { AuthHelper } from '../lib/auth';
-import { ApiService } from '../lib/api';
+import { AuthService } from '../lib/api';
 
 interface AuthContextType {
   user:  User | null;
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await ApiService.logout();
+      await AuthService.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const response = await ApiService.getCurrentUser();
+      const response = await AuthService.getCurrentUser();
       if (response.success && response.data) {
         setUser(response.data);
         AuthHelper.saveAuth(AuthHelper.getToken()!, response.data);

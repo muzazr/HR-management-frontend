@@ -24,7 +24,7 @@ export class AuthHelper {
   static isAuthenticated(): boolean {
     const token = this.getToken();
     const user = this.getUser();
-    return ! !(token && user);
+    return !!(token && user);
   }
 
   // Clear auth
