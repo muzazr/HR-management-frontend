@@ -212,7 +212,7 @@ export class MockDatabase {
     };
 
     mockUsers.push(newUser);
-    console.log('Mock DB: User created:', sanitizeUser(newUser));
+    // console.log('Mock DB: User created:', sanitizeUser(newUser));
     
     return sanitizeUser(newUser);
   }
@@ -241,7 +241,7 @@ export class MockDatabase {
     mockSessions.push(session);
     this.updateLastLogin(userId);
     
-    console.log('Mock DB: Session created for user:', userId);
+    // console.log('Mock DB: Session created for user:', userId);
     return token;
   }
 
@@ -284,7 +284,7 @@ export class MockDatabase {
 
     const token = this.createSession(user.id);
 
-    console.log('Mock DB: Login successful:', user.username);
+    // console.log('Mock DB: Login successful:', user.username);
     return {
       user:  sanitizeUser(user),
       token,
@@ -302,7 +302,7 @@ export class MockDatabase {
     const user = this.createUser(userData);
     const token = this.createSession(user.id);
 
-    console.log('Mock DB: Registration successful:', user.username);
+    // console.log('Mock DB: Registration successful:', user.username);
     return {
       user,
       token,
@@ -358,7 +358,7 @@ export class MockDatabase {
     };
 
     mockJobs.unshift(newJob); // Add to beginning
-    console.log('✅ Mock DB: Job created:', newJob);
+    // console.log(' Mock DB: Job created:', newJob);
     return newJob;
   }
 
@@ -373,7 +373,7 @@ export class MockDatabase {
       id: jobId, // Prevent ID change
     };
 
-    console.log('✅ Mock DB: Job updated:', mockJobs[index]);
+    // console.log(' Mock DB: Job updated:', mockJobs[index]);
     return mockJobs[index];
   }
 
@@ -383,7 +383,7 @@ export class MockDatabase {
     mockJobs = mockJobs.filter(job => job. id !== jobId);
     
     if (mockJobs.length < initialLength) {
-      console.log('✅ Mock DB: Job deleted:', jobId);
+      // console.log(' Mock DB: Job deleted:', jobId);
       return true;
     }
     return false;
@@ -395,7 +395,7 @@ export class MockDatabase {
     if (!job) return null;
 
     job.is_open = !job.is_open;
-    console.log('✅ Mock DB: Job is_open toggled:', job);
+    // console.log(' Mock DB: Job is_open toggled:', job);
     return job;
   }
 
@@ -426,7 +426,7 @@ export class MockDatabase {
 
   // Simulate CV Processing (Mock AI processing)
   static async processCVs(jobId: string, cvFiles: File[]): Promise<Applicant[]> {
-    console.log(`🎭 Mock DB: Processing ${cvFiles.length} CVs for job ${jobId}`);
+    // console.log(`Mock DB: Processing ${cvFiles.length} CVs for job ${jobId}`);
 
     const job = this.getJobById(jobId);
     if (!job) throw new Error('Job not found');
@@ -438,11 +438,11 @@ export class MockDatabase {
       const mockNames = ['John Doe', 'Jane Smith', 'Alex Johnson', 'Maria Garcia', 'Tom Wilson'];
       const mockEmails = ['john@example.com', 'jane@example.com', 'alex@example.com', 'maria@example.com', 'tom@example.com'];
       const mockSkills = [
-        'JavaScript, React, Node.js',  // ✅ STRING
-        'Python, Django, PostgreSQL',  // ✅ STRING
-        'Java, Spring Boot, MySQL',  // ✅ STRING
-        'C#, .NET, Azure',  // ✅ STRING
-        'Go, Docker, Kubernetes',  // ✅ STRING
+        'JavaScript, React, Node.js',  
+        'Python, Django, PostgreSQL', 
+        'Java, Spring Boot, MySQL',
+        'C#, .NET, Azure', 
+        'Go, Docker, Kubernetes',
       ];
 
       const randomIndex = Math.floor(Math.random() * mockNames.length);
@@ -453,7 +453,7 @@ export class MockDatabase {
         name: mockNames[randomIndex],
         email: mockEmails[randomIndex],
         phone: `+62 8${Math.floor(Math.random() * 1000000000)}`,
-        skills: mockSkills[randomIndex],  // ✅ STRING
+        skills: mockSkills[randomIndex],  //  STRING
         score: Math.floor(Math.random() * 30 + 70) / 10,
         position: job.title,
         summary: `Experienced professional with ${Math.floor(Math.random() * 5 + 3)} years in the industry.`,
@@ -471,7 +471,7 @@ export class MockDatabase {
       mockJobs[jobIndex].applicants = (mockJobs[jobIndex].applicants || 0) + newApplicants.length;
     }
 
-    console.log(`✅ Mock DB: Processed ${newApplicants.length} applicants`);
+    // console.log(` Mock DB: Processed ${newApplicants.length} applicants`);
     return newApplicants;
   }
 
@@ -514,4 +514,4 @@ export class MockDatabase {
 
 }
 
-console.log(' Mock Database initialized with', mockUsers.length, 'users');
+// console.log(' Mock Database initialized with', mockUsers.length, 'users');

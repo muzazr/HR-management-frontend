@@ -108,18 +108,18 @@ export default function JobDetailPage() {
             const response = await ApplicantService.uploadCVs(jobId, uploadedCVs)
             
             if(response.success) {
-                console.log('Upload success, refreshing data...')
+                // console.log('Upload success, refreshing data...')
                 setUploadedCVs([])
     
                 const applicantsResponse = await ApplicantService.getByJobId(jobId)
                 if(applicantsResponse.success && applicantsResponse.data) {
-                    console.log(`Refreshed: ${applicantsResponse.data.length} applicants`)
+                    // console.log(`Refreshed: ${applicantsResponse.data.length} applicants`)
                     setApplicants(applicantsResponse.data)
                 }
     
                 const jobResponse = await JobService.getById(jobId)
                 if(jobResponse.success && jobResponse.data) {
-                    console.log('refreshed job data')
+                    // console.log('refreshed job data')
                     setJob(jobResponse.data)
                 }
     
@@ -135,14 +135,13 @@ export default function JobDetailPage() {
         }
     }
 
-    // replace existing handleUpdateCV with this (app/dashboard/jobs/[id]/page.tsx)
     const handleUpdateCV = async (applicantId: string, file: File) => {
     try {
-        setIsUploading(true) // optional, reuse an uploading state or create new
-        console.log('🔄 Updating CV for', applicantId)
+        setIsUploading(true) 
+        // console.log(' Updating CV for', applicantId)
 
         const response = await ApplicantService.updateCV(applicantId, file)
-        console.log('updateCV response:', response)
+        // console.log('updateCV response:', response)
 
         if (response.success) {
         // REFRESH full applicant list (reliable)
@@ -153,7 +152,6 @@ export default function JobDetailPage() {
             const updated = applicantsResponse.data.find(a => String(a.id) === String(applicantId))
             setSelectedApplicant(updated ?? null)
         }
-
         
         // refresh job counts if needed
         const jobResponse = await JobService.getById(jobId)
@@ -168,7 +166,7 @@ export default function JobDetailPage() {
         return null
         }
     } catch (err: any) {
-        console.error('handleUpdateCV error:', err)
+        // console.error('handleUpdateCV error:', err)
         showError('Error', err.message || 'Failed to update CV')
         throw err
     } finally {
@@ -383,7 +381,7 @@ export default function JobDetailPage() {
                 <div className="col-span-2 text-center text-sm font-medium text-gray-400">Score</div>
                 </div>
 
-                {/* Body for desktop / tablet */}
+                {/* Body for desktop or tablet */}
                 <div className="hidden md:block">
                 {displayedApplicants.length === 0 ? (
                     <div className="text-center py-12 text-gray-400">No applicants yet. Upload CVs to get started.</div>

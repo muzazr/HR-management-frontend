@@ -7,7 +7,6 @@ export async function GET(
   try {
     const { jobId } = await context.params;
     
-    // 1. AMBIL TOKEN DARI FRONTEND
     const authHeader = request.headers.get('authorization');
     
     // Kalau gak ada token, tolak langsung
@@ -19,17 +18,17 @@ export async function GET(
 
     const backendUrl = `https://ai-recruitment-app-sigma.vercel.app/jobs/${jobId}/applicants`;
     
-    // 2. TEMPEL TOKEN KE REQUEST BACKEND
+    // TEMPEL TOKEN KE REQUEST BACKEND
     const response = await fetch(backendUrl, {
         method: 'GET',
         headers: {
-            'Authorization': authHeader, // <--- INI YG TADINYA ILANG
+            'Authorization': authHeader,
             'Content-Type' : 'application/json'
         }
     });
 
     if (!response.ok) {
-      console.error('❌ Backend error:', response.status);
+      console.error('Backend error:', response.status);
       return NextResponse.json(
         { detail: `Backend error: ${response.status}` },
         { status: response.status }

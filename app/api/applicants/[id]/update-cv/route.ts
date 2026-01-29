@@ -8,7 +8,7 @@ export async function PUT(
     const { id: applicantId } = await context.params;
     const formData = await request.formData();
     
-    // 1. Ambil Token
+    // Ambil Token
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
        return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
@@ -16,15 +16,12 @@ export async function PUT(
 
     console.log('Proxying update CV to backend...', { applicantId });
 
-    // 2. URL Backend Baru: /applicants/{id} 
-    // (BUKAN /applicants/{id}/update-cv lagi)
     const backendUrl = `https://ai-recruitment-app-sigma.vercel.app/applicants/${applicantId}`;
     
     const response = await fetch(backendUrl, {
       method: 'PUT',
       headers: {
         'Authorization': authHeader, 
-        // JANGAN SET Content-Type manual untuk FormData! Biar fetch yg atur boundary.
       },
       body: formData,
     });

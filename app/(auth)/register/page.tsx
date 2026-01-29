@@ -97,7 +97,7 @@ export default function RegisterPage() {
     try {
       if(imageSrc && croppedAreaPixels) {
         const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels)
-        console.log('croppedBlob', croppedImageBlob)
+        // console.log('croppedBlob', croppedImageBlob)
 
         if(croppedImageBlob) {
           // preview dari crop nya

@@ -1,16 +1,15 @@
-// Base HTTP Client with Interceptors
 import { Storage } from '../storage';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ai-recruitment-app-sigma.vercel.app';
 export const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK !== 'false';
 
 //Debug log environment
-console.log('🔧 Environment Config:', {
-  API_BASE_URL,
-  USE_MOCK_API,
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  NEXT_PUBLIC_USE_MOCK: process.env.NEXT_PUBLIC_USE_MOCK,
-});
+// console.log('Environment Config:', {
+//   API_BASE_URL,
+//   USE_MOCK_API,
+//   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+//   NEXT_PUBLIC_USE_MOCK: process.env.NEXT_PUBLIC_USE_MOCK,
+// });
 
 // ==================== HELPERS ====================
 
@@ -46,7 +45,7 @@ export async function apiClient<T>(
       headers['Authorization'] = `Bearer ${token}`;
     }
   }
-  
+
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...fetchOptions,

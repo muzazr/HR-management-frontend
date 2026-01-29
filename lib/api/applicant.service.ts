@@ -1,21 +1,18 @@
-// Applicant Service - FIXED VERSION
 import { Applicant, ApplicantsResponse, UpdateCVResponse, UploadCVsResponse } from '../../types/applicant';
 import { MockDatabase } from '../mock-db';
 import { apiClient, delay, uploadClient, USE_MOCK_API } from './client';
 
 export class ApplicantService {
 
-  // Helper private untuk mengambil token (supaya tidak berulang-ulang)
+  // Helper private untuk mengambil token
   private static getAuthHeaders(isMultipart = false): HeadersInit {
-    const token = localStorage.getItem('auth_token'); // Sesuaikan key dengan screenshot kamu
+    const token = localStorage.getItem('auth_token');
     const headers: any = {};
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    // PENTING: Jangan set Content-Type kalau Multipart (Upload File),
-    // biar browser yang set boundary-nya otomatis.
     if (!isMultipart) {
       headers['Content-Type'] = 'application/json';
     }
@@ -23,12 +20,9 @@ export class ApplicantService {
     return headers;
   }
 
-  /**
-   * Get applicants by job ID
-   */
+
 /**
    * Get applicants by job ID
-   * UPDATED: Sekarang pakai fetch manual biar token auth-nya pasti kebawa
    */
   static async getByJobId(jobId: string): Promise<ApplicantsResponse> {
     console.log('ApplicantService.getByJobId:', jobId);
@@ -40,9 +34,6 @@ export class ApplicantService {
     }
 
     try {
-      // --- PERUBAHAN DISINI ---
-      // Kita hapus process.env.NEXT_PUBLIC_API_URL biar dia nembak ke relative path (Next.js server)
-      // Dan kita sesuaikan path-nya ke route proxy yang lu buat: /api/applicants/job/[id]
       
       const response = await fetch(`/api/applicants/job/${jobId}`, {
         method: 'GET',
@@ -58,7 +49,6 @@ export class ApplicantService {
 
       const data = await response.json();
       
-      // Mapping data (Pastikan ini sesuai struktur JSON dari backend lu)
       const applicants: Applicant[] = data.map((app: any) => ({
         id: app.id.toString(),
         jobId: jobId,
@@ -102,11 +92,9 @@ export class ApplicantService {
 
       console.log('Uploading to API Proxy...');
 
-      // --- PERUBAHAN DISINI ---
-      // Pastikan path ini sesuai dengan folder: app/api/jobs/[id]/apply/route.ts
       const response = await fetch(`/api/jobs/${jobId}/apply`, {
         method: 'POST',
-        headers: this.getAuthHeaders(true), // true = Multipart (tapi header Content-Type jangan di-set, biar browser yang urus)
+        headers: this.getAuthHeaders(true),
         body: formData,
       });
 
@@ -117,8 +105,6 @@ export class ApplicantService {
       }
 
       const data = await response.json();
-      
-      // ... (sisa logic return success biarin aja)
       
       return {
         success: true,
@@ -210,10 +196,9 @@ export class ApplicantService {
     try {
       console.log('Deleting via API route...');
 
-      // PERBAIKAN DI SINI: Menambahkan Headers Authorization
       const response = await fetch(`/api/applicants/${applicantId}`, { 
         method: 'DELETE',
-        headers: this.getAuthHeaders(false) // false karena bukan upload file (JSON biasa)
+        headers: this.getAuthHeaders(false)
       });
 
       if(!response.ok) {

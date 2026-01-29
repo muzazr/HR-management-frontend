@@ -7,7 +7,7 @@ export async function DELETE(
   try {
     const { id: applicantId } = await context.params;
 
-    // 1. Ambil Token
+    // Ambil Token
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
        return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
@@ -15,7 +15,6 @@ export async function DELETE(
 
     console.log('Proxying delete applicant to backend...', { applicantId });
 
-    // 2. URL Backend Baru (Sesuai info abang: /applicants/{id})
     const backendUrl = `https://ai-recruitment-app-sigma.vercel.app/applicants/${applicantId}`;
     
     const response = await fetch(backendUrl, {
@@ -30,8 +29,6 @@ export async function DELETE(
         return NextResponse.json({ detail: errorText }, { status: response.status });
     }
 
-    // Backend DELETE biasanya return 204 (No Content) atau JSON sukses
-    // Kita handle aman aja
     const data = response.status === 204 ? { success: true } : await response.json();
 
     return NextResponse.json(data, { status: 200 });

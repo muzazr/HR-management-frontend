@@ -20,7 +20,7 @@ export async function getCroppedImg(
     return null
   }
 
-  const rotRad = (rotation * Math.PI) / 180 // kalau mau support rotasi
+  const rotRad = (rotation * Math.PI) / 180 
 
   // Hitung bounding box agar gambar tidak terpotong saat diputar
   const { width: bBoxWidth, height: bBoxHeight } = rotateSize(

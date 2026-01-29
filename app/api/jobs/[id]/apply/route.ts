@@ -8,7 +8,6 @@ export async function POST (
         const {id: jobId} = await context.params;
         const formData = await request.formData();
         
-        // 1. AMBIL TOKEN
         const authHeader = request.headers.get('authorization');
 
         if (!authHeader) {
@@ -19,11 +18,10 @@ export async function POST (
 
         const backendUrl = `https://ai-recruitment-app-sigma.vercel.app/jobs/${jobId}/apply`
         
-        // 2. KIRIM KE BACKEND (JANGAN SET CONTENT-TYPE MANUAL UTK FORMDATA!)
         const response = await fetch(backendUrl, {
             method: 'POST',
             headers: {
-                'Authorization': authHeader, // <--- WAJIB ADA
+                'Authorization': authHeader,
             },
             body: formData
         })

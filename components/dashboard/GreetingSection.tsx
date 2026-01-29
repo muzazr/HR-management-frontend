@@ -1,7 +1,7 @@
 import Image from "next/image"
 import { useAuth } from "../../hooks/useAuth"
 import { useEffect, useState, useRef } from "react"
-import { JobService, AuthService } from "../../lib/api" // Pastikan AuthService diimport
+import { JobService, AuthService } from "../../lib/api"
 import { useRouter } from "next/navigation"
 import ConfirmationModal from "../ConfirmationModal"
 
