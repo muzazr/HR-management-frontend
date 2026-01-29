@@ -371,43 +371,75 @@ export default function JobDetailPage() {
                     </svg>
                 </div>
             </div>
-
-            {/* Applicants Table */}
+            
+            {/* Applicants */}
             <div className="bg-[#1e1e1e] rounded-2xl px-6 py-4">
-                <div className="overflow-x-auto">
-                    {/* Header */}
-                    <div className="bg-[#262626] rounded-2xl px-4 py-4 mb-1">
-                        <div className="flex justify-between">
-                            <div className="text-center text-sm font-medium text-gray-400 flex-1/10">Ranking</div>
-                            <div className="text-center text-sm font-medium text-gray-400 flex-4/10">Name</div>
-                            <div className="text-center text-sm font-medium text-gray-400 flex-4/10">Email</div>
-                            <div className="text-center text-sm font-medium text-gray-400 flex-1/10">Score</div>
+            <div className="overflow-x-auto">
+                {/* Header */}
+                <div className="hidden md:grid grid-cols-12 gap-4 bg-[#262626] rounded-2xl px-4 py-4 mb-1">
+                <div className="col-span-1 text-center text-sm font-medium text-gray-400">Ranking</div>
+                <div className="col-span-4 text-center text-sm font-medium text-gray-400">Name</div>
+                <div className="col-span-5 text-center text-sm font-medium text-gray-400">Email</div>
+                <div className="col-span-2 text-center text-sm font-medium text-gray-400">Score</div>
+                </div>
+
+                {/* Body for desktop / tablet */}
+                <div className="hidden md:block">
+                {displayedApplicants.length === 0 ? (
+                    <div className="text-center py-12 text-gray-400">No applicants yet. Upload CVs to get started.</div>
+                ) : (
+                    displayedApplicants.map((applicant) => (
+                    <div
+                        key={applicant.id}
+                        onClick={() => setSelectedApplicant(applicant)}
+                        className="grid grid-cols-12 gap-4 py-4 px-4 hover:bg-[#151515] cursor-pointer transition-colors rounded-lg items-center"
+                    >
+                        <div className="col-span-1 text-center text-white">{applicant.originalRank}</div>
+                        <div className="col-span-4 text-white truncate">{applicant.name}</div>
+                        <div className="col-span-5 text-white truncate break-all">{applicant.email}</div>
+                        <div className="col-span-2 text-center text-white font-semibold">
+                        {applicant.score}
+                        <span className="text-yellow-500">/100</span>
                         </div>
                     </div>
-
-                    {/* Body */}
-                    <div className="overflow-x-auto">
-                        {displayedApplicants.length === 0 ? (
-                            <div className='text-center py-12 text-gray-400'>
-                                No applicants yet. Upload CVs to get started.
-                            </div>
-                        ) :
-                        (
-                        displayedApplicants.map((applicant, index) => (
-                                <div 
-                                    key={applicant.id + index}
-                                    onClick={() => setSelectedApplicant(applicant)}
-                                    className="flex justify-between py-4 px-4 hover:bg-[#151515] cursor-pointer transition-colors rounded-lg"
-                                >
-                                    <div className="text-center text-white flex-1/10">{applicant.originalRank}</div>
-                                    <div className="text-center text-white flex-4/10">{applicant.name}</div>
-                                    <div className="text-center text-white flex-4/10">{applicant.email}</div>
-                                    <div className="text-center text-white flex-1/10 font-semibold">{applicant.score}<span className='text-yellow-500'>/100</span></div>
-                                </div>
-                            ))
-                        )}
-                    </div>
+                    ))
+                )}
                 </div>
+
+                {/* Body for mobile */}
+                <div className="md:hidden">
+                {displayedApplicants.length === 0 ? (
+                    <div className="text-center py-12 text-gray-400">No applicants yet. Upload CVs to get started.</div>
+                ) : (
+                    displayedApplicants.map((applicant) => (
+                    <div
+                        key={applicant.id}
+                        onClick={() => setSelectedApplicant(applicant)}
+                        className="mb-3 p-3 bg-[#151515] rounded-lg cursor-pointer hover:bg-[#171717] transition-colors"
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                        <div>
+                            <div className="text-sm text-gray-400">#{applicant.originalRank}</div>
+                            <div className="text-lg font-semibold text-white">{applicant.name}</div>
+                        </div>
+
+                        <div className="text-right">
+                            <div className="text-sm text-gray-400">Score</div>
+                            <div className="text-lg font-semibold text-white">
+                            {applicant.score}
+                            <span className="text-yellow-500">/100</span>
+                            </div>
+                        </div>
+                        </div>
+
+                        <div className="mt-2 text-sm text-gray-300 break-all">
+                        {applicant.email}
+                        </div>
+                    </div>
+                    ))
+                )}
+                </div>
+            </div>
             </div>
 
             <CandidateDetailModal 
