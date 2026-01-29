@@ -9,7 +9,7 @@ interface AddJobModalProps {
         title: string
         location: string
         min_education: string
-        skills: string  // TAMBAHAN
+        skills: string 
         deadline: string
     }) => void
 }
@@ -19,7 +19,7 @@ export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalP
         title:  '',
         location: '',
         min_education: '',
-        skills: '',  // TAMBAHAN
+        skills: '', 
         deadline:  '',
     })
 
@@ -39,7 +39,7 @@ export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalP
             title: '',
             location: '',
             min_education:  '',
-            skills: '',  // TAMBAHAN
+            skills: '', 
             deadline:  '',
         })
     }
@@ -100,7 +100,7 @@ export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalP
                         />
                     </div>
 
-                    {/* min_education (Education) */}
+                    {/* education */}
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                             Minimum Education <span className="text-red-500">*</span>
@@ -127,7 +127,7 @@ export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalP
                         </div>
                     </div>
 
-                    {/* Required Skills - TAMBAHAN */}
+                    {/* Required Skills */}
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                             Required Skills <span className="text-red-500">*</span>

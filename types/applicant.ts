@@ -1,5 +1,3 @@
-// Applicant Types - UPDATED BASED ON REAL API
-
 export interface Applicant {
   id: string;
   jobId: string;

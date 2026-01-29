@@ -1,4 +1,3 @@
-// Authentication Service
 import { emitWarning } from 'process';
 import { AuthResponse, User } from '../../types/auth';
 import { MockDatabase } from '../mock-db';

@@ -9,11 +9,11 @@ export interface User {
 }
 
 export interface MockUser extends User {
-  password: string; // Only for mock database
+  password: string; 
 }
 
 export interface LoginRequest {
-  username: string; // bisa username atau email
+  username: string;
   password: string;
 }
 

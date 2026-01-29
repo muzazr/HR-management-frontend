@@ -215,7 +215,7 @@ export default function CandidateDetail({
                         </div>
                     </div>
 
-                    {/* Skills Card - STYLE TETAP SAMA */}
+                    {/* Skills Card */}
                     <div className="relative bg-[#1e1e1e] rounded-2xl overflow-hidden">
                         <div className="absolute inset-0">
                             <div className="absolute w-[25%] h-[25%] -right-[5%] -top-[15%] bg-[#29C5EE] rounded-full blur-[60px]" />
@@ -240,7 +240,7 @@ export default function CandidateDetail({
                         </div>
                     </div>
 
-                    {/* Summary Card - STYLE TETAP SAMA */}
+                    {/* Summary Card */}
                     <div className="relative bg-[#1e1e1e] rounded-2xl overflow-hidden">
                         <div className="absolute inset-0">
                             <div className="absolute w-[25%] h-[25%] -left-[5%] -bottom-[15%] bg-[#EAB04D] rounded-full blur-[60px]" />
@@ -254,7 +254,7 @@ export default function CandidateDetail({
                         </div>
                     </div>
 
-                    {/* AI Analysis Card - STYLE TETAP SAMA */}
+                    {/* AI Analysis Card */}
                     <div className="relative bg-[#1e1e1e] rounded-2xl overflow-hidden">
                         <div className="absolute inset-0">
                             <div className="absolute w-[25%] h-[25%] -right-[10%] -bottom-[15%] bg-[#19C8A7] rounded-full blur-[60px]" />

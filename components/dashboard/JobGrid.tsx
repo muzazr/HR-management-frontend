@@ -15,7 +15,7 @@ interface JobGridProps {
 
 export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridProps) {
     
-    // STATE:  Modal & Jobs Data
+    // Modal & Jobs Data
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [jobs, setJobs] = useState<Job[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -42,7 +42,7 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
         }
     }
 
-    // FUNCTION: Calculate posted days from postedDate
+    // Calculate posted days from postedDate
     const getPostedDays = (postedDate: string): number => {
         const now = new Date()
         const posted = new Date(postedDate)
@@ -51,7 +51,7 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
         return diffDays === 0 ? 1 : diffDays
     }
 
-    // FUNCTION: Add new job
+    // Add new job
     const handleAddJob = async (newJobData: {title: string; location: string; min_education: string; skills: string; deadline: string}) => {
         try {
             const response = await JobService.create(newJobData)
@@ -129,7 +129,6 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
         return colors[index % 4]
     }
 
-    // look at this, can moved later
     if(isLoading) {
         return (
             <div className='text-center py-12'>

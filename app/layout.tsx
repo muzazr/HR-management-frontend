@@ -5,8 +5,8 @@ import { AuthProvider } from '../contexts/AuthContext';
 
 const urbanist = Urbanist({ 
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'], // Pilih weight yang kamu butuhkan
-  variable: '--font-urbanist', // Optional: CSS variable
+  weight: ['300', '400', '500', '600', '700', '800'], 
+  variable: '--font-urbanist', 
 })
 
 export const metadata: Metadata = {
