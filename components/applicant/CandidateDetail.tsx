@@ -14,6 +14,16 @@ interface CandidateDetailProps {
     onDeleteApplicant?: (applicantId: string) => void
 }
 
+/**
+ * CandidateDetail
+ * - Menampilkan detail applicant (profil, kontak, skill, summary, AI analysis).
+ * - Mendukung update CV (upload PDF) dan penghapusan applicant bila callback tersedia.
+ * - Dapat dirender sebagai bagian halaman atau di dalam modal (isModal prop).
+ *
+ * Catatan:
+ * - Komponen tidak melakukan fetch sendiri, menerima data lewat prop applicant.
+ * - Validasi file: hanya menerima PDF untuk update CV.
+ */
 export default function CandidateDetail({
     applicant,
     isModal = false,
@@ -21,15 +31,25 @@ export default function CandidateDetail({
     onUpdateCV,
     onDeleteApplicant
 }:  CandidateDetailProps) {
+    // Mode interaksi untuk memperbarui CV
     const [isUpdateCVMode, setIsUpdateCVMode] = useState(false)
+    // File PDF yang dipilih untuk update CV
     const [newCVFile, setNewCVFile] = useState<File | null>(null)
+    // State loading untuk proses upload/update CV
     const [isUpdating, setIsUpdating] = useState(false)
+    // Hook konfirmasi untuk operasi destruktif (delete)
     const { confirmation, showConfirmation, close: closeConfirmation, handleConfirm } = useConfirmation() 
 
+    // Parse skills menjadi array singkat untuk render badge
     const skillsArray = applicant.skills
         ? applicant.skills.split(',').map(s => s.trim()).filter(s => s.length > 0)
         : []
 
+    /**
+     * handleFileSelect
+     * - Validasi tipe file (hanya PDF).
+     * - Simpan file ke state newCVFile untuk dikirim saat konfirmasi.
+     */
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
@@ -41,6 +61,12 @@ export default function CandidateDetail({
         }
     }
 
+    /**
+     * handleUpdateCV
+     * - Panggil callback onUpdateCV dengan applicant.id dan file terpilih.
+     * - Menjaga indikator isUpdating selama proses berjalan.
+     * - Reset UI lokal setelah sukses.
+     */
     const handleUpdateCV = async () => {
         if (newCVFile && onUpdateCV) {
             setIsUpdating(true)
@@ -54,6 +80,11 @@ export default function CandidateDetail({
         }
     }
 
+    /**
+     * handleDelete
+     * - Tampilkan konfirmasi sebelum memanggil onDeleteApplicant.
+     * - Menggunakan hook useConfirmation untuk konsistensi UI.
+     */
     const handleDelete = () => {
         showConfirmation(
             'Delete Applicant',
@@ -94,7 +125,10 @@ export default function CandidateDetail({
                 {/* Content */}
                 <div className="px-6 pb-6 space-y-6">
                     
-                    {/* Profile Card */}
+                    {/* Profile Card
+                        - Menampilkan nama, posisi, score, kontak, dan tindakan (update CV / delete).
+                        - Tombol tindakan hanya muncul jika callback terkait tersedia.
+                    */}
                     <div className="relative bg-[#1e1e1e] rounded-2xl overflow-hidden">
                         <div className="absolute inset-0">
                             <div className="relative w-[25%] h-[25%] -left-[5%] -top-[5%] bg-[#CF1A2C] rounded-full blur-[75px]" />
@@ -141,6 +175,7 @@ export default function CandidateDetail({
                                 </div>
                             </div>
 
+                            {/* Action Buttons: Update CV & Delete */}
                             {onUpdateCV && onDeleteApplicant && (
                                 <div className="flex justify-center gap-6">
                                     <button 
@@ -173,6 +208,10 @@ export default function CandidateDetail({
                                 </div>
                             )}
 
+                            {/* Update CV Panel
+                                - Input file (PDF) tersembunyi; label bertindak sebagai zone klik.
+                                - Tampilkan nama file yang dipilih; tombol konfirmasi memanggil handleUpdateCV.
+                            */}
                             {isUpdateCVMode && (
                                 <div className="bg-[#151515] rounded-lg p-4 border">
                                     <label className="relative flex flex-col items-center justify-center min-h-[100px] border-2 border-dashed border-gray-700 rounded-xl cursor-pointer hover:border-gray-600 transition-colors">
@@ -215,7 +254,7 @@ export default function CandidateDetail({
                         </div>
                     </div>
 
-                    {/* Skills Card */}
+                    {/* Skills Card: render badge untuk setiap skill (atau pesan bila kosong) */}
                     <div className="relative bg-[#1e1e1e] rounded-2xl overflow-hidden">
                         <div className="absolute inset-0">
                             <div className="absolute w-[25%] h-[25%] -right-[5%] -top-[15%] bg-[#29C5EE] rounded-full blur-[60px]" />
@@ -240,7 +279,7 @@ export default function CandidateDetail({
                         </div>
                     </div>
 
-                    {/* Summary Card */}
+                    {/* Summary Card: ringkasan profil applicant */}
                     <div className="relative bg-[#1e1e1e] rounded-2xl overflow-hidden">
                         <div className="absolute inset-0">
                             <div className="absolute w-[25%] h-[25%] -left-[5%] -bottom-[15%] bg-[#EAB04D] rounded-full blur-[60px]" />
@@ -254,7 +293,7 @@ export default function CandidateDetail({
                         </div>
                     </div>
 
-                    {/* AI Analysis Card */}
+                    {/* AI Analysis Card: hasil analisis AI (jika ada) */}
                     <div className="relative bg-[#1e1e1e] rounded-2xl overflow-hidden">
                         <div className="absolute inset-0">
                             <div className="absolute w-[25%] h-[25%] -right-[10%] -bottom-[15%] bg-[#19C8A7] rounded-full blur-[60px]" />

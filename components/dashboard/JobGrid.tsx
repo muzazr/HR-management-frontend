@@ -13,18 +13,29 @@ interface JobGridProps {
     onJobUpdate?: () => void
 }
 
+/*
+ * JobGrid
+ * - Menampilkan grid kartu pekerjaan (JobCard) dan kartu tambah pekerjaan (AddJobCard).
+ * - Meng-handle fetch job, sorting, filtering, dan pembuatan job baru lewat modal.
+ */
 export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridProps) {
     
-    // Modal & Jobs Data
+    // Kontrol modal dan data job
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [jobs, setJobs] = useState<Job[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState('')
 
+    // Fetch initial jobs saat mount
     useEffect(() => {
         fetchJobs()
     }, [])
 
+    /**
+     * fetchJobs
+     * - Ambil daftar job dari API, update state jobs / error / loading.
+     * - Minimal handling: set error message untuk UI jika gagal.
+     */
     const fetchJobs = async () => {
         setIsLoading(true)
         setError('')
@@ -42,7 +53,11 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
         }
     }
 
-    // Calculate posted days from postedDate
+    /**
+     * getPostedDays
+     * - Hitung selisih hari antara tanggal posted dengan hari ini.
+     * - Jika 0 hari, tampilkan sebagai 1 agar UI tidak menampilkan 0 days.
+     */
     const getPostedDays = (postedDate: string): number => {
         const now = new Date()
         const posted = new Date(postedDate)
@@ -51,7 +66,12 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
         return diffDays === 0 ? 1 : diffDays
     }
 
-    // Add new job
+    /**
+     * handleAddJob
+     * - Panggil API untuk membuat job baru.
+     * - Jika sukses: prepend job baru ke state dan tutup modal.
+     * - Opsional: panggil callback onJobUpdate (parent) bila disediakan.
+     */
     const handleAddJob = async (newJobData: {title: string; location: string; min_education: string; skills: string; deadline: string}) => {
         try {
             const response = await JobService.create(newJobData)
@@ -70,7 +90,12 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
         }
     }
 
-    // SORTING & FILTERING Logic
+    /**
+     * displayedJobs (memoized)
+     * - Terapkan filtering berdasarkan searchQuery
+     * - Terapkan sorting berdasarkan nilai prop sortBy
+     * - Mengembalikan array job yang siap untuk dirender
+     */
     const displayedJobs = useMemo(() => {
         let filtered = jobs
 
@@ -114,7 +139,12 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
         return sorted
     }, [jobs, sortBy, searchQuery])
 
-    // Generate color based on position in LATEST sort
+    /**
+     * getColorByJob
+     * - Menentukan warna kartu berdasarkan posisi job dalam urutan "Latest".
+     * - Warna dipilih dari array bergilir (red, yellow, green, blue).
+     * - Tujuan: variasi visual antar kartu.
+     */
     const getColorByJob = (jobId: string): string => {
         // Sort by Latest untuk dapat urutan asli
         const latestSorted = [...jobs].sort((a, b) => 
@@ -129,6 +159,7 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
         return colors[index % 4]
     }
 
+    // Render loading state
     if(isLoading) {
         return (
             <div className='text-center py-12'>
@@ -138,6 +169,7 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
         )
     }
 
+    // Render error state dengan tombol retry
     if (error) {
         return (
             <div className="text-center py-12">
@@ -152,13 +184,14 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
         )
     }
 
+    // Render grid job + add modal
     return (
         <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Add Job Card */}
+                {/* Add Job Card (pemicu modal) */}
                 <AddJobCard onClick={() => setIsModalOpen(true)}/>
 
-                {/* Job Cards */}
+                {/* Job Cards (dari displayedJobs) */}
                 {displayedJobs.map((job) => (
                     <JobCard
                         key={job.id}
@@ -175,7 +208,7 @@ export default function JobGrid({ sortBy, searchQuery, onJobUpdate }: JobGridPro
                 ))}
             </div>
 
-            {/* Add Job Modal */}
+            {/* Modal tambah job */}
             <AddJobModal 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}

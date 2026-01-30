@@ -2,6 +2,12 @@
 
 import { useState, FormEvent } from 'react'
 
+/**
+ * Props untuk AddJobModal
+ * - isOpen: kontrol visibilitas modal
+ * - onClose: callback untuk menutup modal
+ * - onSubmit: callback yang menerima objek job (valid sudah dilakukan di komponen)
+ */
 interface AddJobModalProps {
     isOpen: boolean
     onClose:  () => void
@@ -14,7 +20,17 @@ interface AddJobModalProps {
     }) => void
 }
 
+/**
+ * AddJobModal
+ * - Modal sederhana untuk membuat job baru.
+ * - Menyimpan form lokal, melakukan validasi minimal (required) dan memanggil onSubmit.
+ * - Tidak melakukan side-effect selain memanggil callback dan mereset form.
+ */
 export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalProps) {
+    /**
+     * formData - state lokal untuk field job.
+     * Struktur: { title, location, min_education, skills, deadline }
+     */
     const [formData, setFormData] = useState({
         title:  '',
         location: '',
@@ -23,6 +39,14 @@ export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalP
         deadline:  '',
     })
 
+    /**
+     * handleSubmit
+     * - Prevent default submit
+     * - Validasi required sederhana (semua field wajib)
+     * - Panggil onSubmit dengan payload formData
+     * - Reset form ke nilai awal setelah submit
+     * Catatan: UI/UX (alert) digunakan untuk validasi client-side sederhana.
+     */
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault()
         
@@ -44,6 +68,7 @@ export default function AddJobModal({ isOpen, onClose, onSubmit }:  AddJobModalP
         })
     }
 
+    // Jika modal tertutup, tidak merender apa-apa
     if (!isOpen) return null
 
     return (

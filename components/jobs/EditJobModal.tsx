@@ -16,7 +16,18 @@ interface EditJobModalProps {
     }) => Promise<void>
 }
 
+/**
+ * EditJobModal
+ * - Modal untuk mengedit data job yang sudah ada.
+ * - Pre-fill form saat prop job tersedia.
+ * - Memanggil onSubmit dengan payload update saat disubmit.
+ *
+ * Catatan singkat:
+ * - Tidak melakukan navigasi atau fetch tambahan, cuma mengirim update melalui onSubmit.
+ * - Menjaga state isSubmitting untuk menonaktifkan input selama request berjalan.
+ */
 export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJobModalProps) {
+    // State form lokal; diisi ulang otomatis saat prop job berubah
     const [formData, setFormData] = useState({
         title: '',
         location: '',
@@ -24,9 +35,10 @@ export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJob
         skills: '',
         deadline: '',
     })
+    // Indikator proses submit (disable UI saat true)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    // Pre-fill form ketika job berubah
+    // Prefill: set nilai form saat job tersedia / berubah
     useEffect(() => {
         if (job) {
             setFormData({
@@ -39,6 +51,12 @@ export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJob
         }
     }, [job])
 
+    /**
+     * handleSubmit
+     * - Validasi client-side minimal (required fields).
+     * - Set isSubmitting untuk mencegah interaksi double.
+     * - Panggil onSubmit (asynchronous) dan tangani error sederhana.
+     */
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
         
@@ -58,18 +76,21 @@ export default function EditJobModal({ isOpen, onClose, job, onSubmit }: EditJob
         }
     }
 
+    // Hanya tutup modal bila tidak sedang submit
     const handleClose = () => {
         if(!isSubmitting) {
             onClose()
         }
     }
 
+    // Tutup modal ketika backdrop diklik (safeguard: pastikan bukan selama submit)
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if(e.target === e.currentTarget && !isSubmitting) {
             onClose()
         }
     }
 
+    // Jika modal ditutup atau job null => tidak render
     if(!isOpen || !job) return null
 
     return (

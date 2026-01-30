@@ -1,13 +1,28 @@
-import { emitWarning } from 'process';
 import { AuthResponse, User } from '../../types/auth';
 import { MockDatabase } from '../mock-db';
 import { Storage } from '../storage';
 import { apiClient, uploadClient, delay, USE_MOCK_API } from './client';
 
+/**
+ * AuthService
+ * Ringkasan:
+ * - Abstraksi operasi otentikasi (login, register, logout, current user).
+ * - Mendukung mode mock (USE_MOCK_API) untuk pengembangan lokal.
+ * - Semua method static agar dapat dipanggil tanpa instance.
+ *
+ * Catatan singkat:
+ * - Method mock_* digunakan hanya saat USE_MOCK_API = true.
+ * - return mengikuti tipe AuthResponse / struktur sederhana untuk konsistensi pemanggil.
+ */
 export class AuthService {
 
   // ==================== MOCK METHODS ====================
 
+  /**
+   * mockLogin
+   * - Simulasi login via MockDatabase.
+   * - Mengembalikan { success, data: { user, token }, message } atau error.
+   */
   private static async mockLogin(username: string, password: string): Promise<AuthResponse> {
     await delay();
     try {
@@ -18,6 +33,11 @@ export class AuthService {
     }
   }
 
+  /**
+   * mockRegister
+   * - Simulasi registrasi user via MockDatabase.
+   * - Menerima FormData dan mengembalikan user + token jika berhasil.
+   */
   private static async mockRegister(formData: FormData): Promise<AuthResponse> {
     await delay(1200);
     try {
@@ -39,6 +59,10 @@ export class AuthService {
     }
   }
 
+  /**
+   * mockLogout
+   * - Simulasi logout: clear session di mock DB/storage.
+   */
   private static async mockLogout(): Promise<{ success: boolean; message: string }> {
     await delay(300);
     const token = Storage.getToken();
@@ -46,6 +70,10 @@ export class AuthService {
     return { success: true, message: 'Logged out successfully' };
   }
 
+  /**
+   * mockGetCurrentUser
+   * - Ambil user saat ini dari MockDatabase berdasarkan token di Storage.
+   */
   private static async mockGetCurrentUser(): Promise<{ success: boolean; data?: User; error?: string }> {
     await delay(500);
     const token = Storage.getToken();
@@ -59,6 +87,9 @@ export class AuthService {
 
   /**
    * Login user
+   * - Jika USE_MOCK_API true -> gunakan mockLogin.
+   * - Jika non-mock -> kirim FormData ke endpoint /api/login.
+   * - Tangani response non-ok dengan melempar Error .
    */
   static async login(username: string, password: string): Promise<AuthResponse> {
     console.log('AuthService.login', { username });
@@ -128,6 +159,9 @@ export class AuthService {
 
   /**
    * Register new user
+   * - Menerima FormData dari frontend, mengubah field sesuai kebutuhan API target.
+   * - Menggunakan uploadClient untuk mengirim form multipart bila tersedia.
+   * - Kembalikan AuthResponse berisi user info minimal.
    */
   static async register(formData: FormData): Promise<AuthResponse> {
     console.log('AuthService.register');
@@ -171,7 +205,9 @@ export class AuthService {
   }
 
   /**
-   * Logout user
+   * Logout user (client-only)
+   * - Membersihkan Storage lokal / localStorage.
+   * - Tidak memanggil API; fungsi dirancang sebagai client-side cleanup.
    */
   static async logout(): Promise<{ success: boolean; message: string }> {
     console.log('AuthService.logout (client-only)');
@@ -197,6 +233,8 @@ export class AuthService {
 
   /**
    * Get current authenticated user
+   * - Jika USE_MOCK_API true -> mockGetCurrentUser.
+   * - Jika non-mock -> gunakan apiClient untuk memanggil /auth/me dan kembalikan data.user.
    */
   static async getCurrentUser(): Promise<{ success: boolean; data?: User; error?: string }> {
     console.log('AuthService.getCurrentUser');

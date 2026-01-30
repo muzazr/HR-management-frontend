@@ -9,12 +9,21 @@ interface GreetingSectionProps {
     refreshTrigger?: number
 }
 
+/**
+ * - Menampilkan sapaan berdasarkan waktu, statistik singkat (open/closed jobs, applicants)
+ * - Menyediakan dropdown profil dan proses logout dengan konfirmasi
+ * - Fetch stats saat mounting atau ketika refreshTrigger berubah
+ *
+ * implementasi:
+ * - Tidak melakukan side-effect selain fetch stats dan logout
+ * - UI disesuaikan untuk desktop & mobile, menggunakan komponen ConfirmationModal untuk logout
+ */
 export default function GreetingSection ({ refreshTrigger = 0 }: GreetingSectionProps) {
 
     const { user, isAuthenticated, logout: contextLogout } = useAuth()
     const router = useRouter()
     
-    // State Stats
+    // State statistik dan loading
     const [stats, setStats] = useState({
         openJobs: 0,
         closedJobs: 0,
@@ -22,6 +31,7 @@ export default function GreetingSection ({ refreshTrigger = 0 }: GreetingSection
     })
     const [isLoading, setIsLoading] = useState(true)
 
+    // State untuk modal konfirmasi logout
     const [confirmation, setConfirmation] = useState({
         isOpen: false,
         title: 'Confirm Logout',
@@ -33,14 +43,26 @@ export default function GreetingSection ({ refreshTrigger = 0 }: GreetingSection
     const [isProcessing, setIsProcessing] = useState(false)
     const [error, setError] = useState('')
 
+    // Ref dan state untuk mengontrol dropdown profil (hover + click)
+    const profileRef = useRef<HTMLDivElement | null>(null)
+    const [dropdownOpen, setDropdownOpen] = useState(false)
+
+    // Buka popup konfirmasi logout
     const openLogoutConfirmation = () => {
         setConfirmation(prev => ({ ...prev, isOpen: true }))
     }
 
+    // Tutup popup konfirmasi logout
     const closeConfirmation = () => {
         setConfirmation(prev => ({ ...prev, isOpen: false }))
     }
 
+    /**
+     * handleConfirm
+     * - Proses logout: panggil AuthService.logout (server-side) lalu redirect ke /login
+     * - Set error jika operasi gagal
+     * - Flag isProcessing menjaga UI saat request berjalan
+     */
     const handleConfirm = async () => {
         setError('')
         setIsProcessing(true)
@@ -65,6 +87,11 @@ export default function GreetingSection ({ refreshTrigger = 0 }: GreetingSection
         }
     }
 
+    /**
+     * Effect: fetch statistik job
+     * - Dipanggil saat component mount dan ketika isAuthenticated atau refreshTrigger berubah
+     * - Menggunakan isMounted flag untuk mencegah update state setelah unmount
+     */
     useEffect(() => {
         if(!isAuthenticated) {
             setIsLoading(false)
@@ -100,6 +127,7 @@ export default function GreetingSection ({ refreshTrigger = 0 }: GreetingSection
         } 
     }, [isAuthenticated, refreshTrigger])
 
+    // Utility: greeting berdasarkan jam
     const getGreeting = () => {
         const hour = new Date().getHours()
         if(hour >= 6 && hour < 12) return 'Morning'
@@ -107,6 +135,7 @@ export default function GreetingSection ({ refreshTrigger = 0 }: GreetingSection
         return 'Evening'
     }
 
+    // Tampilan saat loading statistik
     if (isLoading) {
         return (
             <div className="relative w-full bg-[#1e1e1e] rounded-2xl pt-4 pb-12 px-4 lg:px-8">
@@ -117,6 +146,7 @@ export default function GreetingSection ({ refreshTrigger = 0 }: GreetingSection
         )
     }
 
+    // Render utama: header, greeting, stats, dan dropdown profil
     return (
         <>
             <div className="relative w-full bg-[#1e1e1e] rounded-2xl pt-4 pb-12 px-4 lg:px-8 overflow-visible group/card"> 
@@ -145,8 +175,13 @@ export default function GreetingSection ({ refreshTrigger = 0 }: GreetingSection
                             </button>
 
                             {/* Profile */}
-                            <div className="relative group"> 
-                                <button className="w-8 h-8 lg:w-10 lg:h-10 rounded-full overflow-hidden cursor-pointer border-2 border-transparent group-hover:border-cyan-400 transition-all"> 
+                            <div className="relative group" ref={profileRef}> 
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setDropdownOpen(prev => !prev)
+                                    }}
+                                    className="w-8 h-8 lg:w-10 lg:h-10 rounded-full overflow-hidden cursor-pointer border-2 border-transparent group-hover:border-cyan-400 transition-all"> 
                                     <Image 
                                         src={user?.photo || "/icons/default-avatar.png"}
                                         alt="profile"
@@ -157,7 +192,9 @@ export default function GreetingSection ({ refreshTrigger = 0 }: GreetingSection
                                 </button>
 
                                 {/* Dropdown Content */}
-                                <div className="absolute right-0 top-full w-64 bg-[#151515] border border-gray-800 rounded-xl shadow-2xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50">
+                                <div className={`absolute right-0 top-full w-64 bg-[#151515] border border-gray-800 rounded-xl shadow-2xl py-2 opacity-0 
+                                                invisible group-hover:opacity-100 group-hover:visible ${dropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}
+                                                transition-all duration-200 transform origin-top-right z-50`}>
                                     <div className="px-4 py-2 border-b border-gray-800 mb-1">
                                         <p className="text-white text-md font-semibold truncate">{user?.name || 'User'}</p>
                                         <p className="text-gray-500 text-sm truncate">@{user?.username || 'username'}</p>
@@ -174,7 +211,6 @@ export default function GreetingSection ({ refreshTrigger = 0 }: GreetingSection
                                     </button>
                                 </div>
                             </div>
-
                         </div>
                     </div>
 

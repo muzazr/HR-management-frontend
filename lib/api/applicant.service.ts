@@ -2,9 +2,19 @@ import { Applicant, ApplicantsResponse, UpdateCVResponse, UploadCVsResponse } fr
 import { MockDatabase } from '../mock-db';
 import { apiClient, delay, uploadClient, USE_MOCK_API } from './client';
 
+/**
+ * ApplicantService
+ * - Abstraksi operasi terkait applicant: ambil per job, upload CV batch, update CV tunggal, hapus applicant.
+ * - Mendukung mode mock (USE_MOCK_API) untuk pengembangan/offline testing.
+ * - Semua method bersifat static agar mudah dipanggil tanpa instance.
+ *
+ * Catatan:
+ * - Error handling diarahkan untuk retutn objek { success, data?, error?, message? }.
+ * - Tidak melakukan side-effect lain selain fetch / pemanggilan MockDatabase.
+ */
 export class ApplicantService {
 
-  // Helper private untuk mengambil token
+  // Helper private untuk mengambil token dari localStorage dan menyiapkan header.
   private static getAuthHeaders(isMultipart = false): HeadersInit {
     const token = localStorage.getItem('auth_token');
     const headers: any = {};
@@ -23,6 +33,9 @@ export class ApplicantService {
 
 /**
    * Get applicants by job ID
+   * - Jika USE_MOCK_API: ambil dari MockDatabase.
+   * - Jika non-mock: panggil API route /api/applicants/job/:jobId dan mapping response ke tipe Applicant.
+   * - Meng-handle common HTTP errors (401,403).
    */
   static async getByJobId(jobId: string): Promise<ApplicantsResponse> {
     console.log('ApplicantService.getByJobId:', jobId);
@@ -72,7 +85,10 @@ export class ApplicantService {
   }
 
   /**
-   * Upload and process CVs
+   * Upload and process CVs (batch)
+   * - Jika USE_MOCK_API: delegasi ke MockDatabase.processCVs.
+   * - Jika non-mock: kirim FormData ke API route `/api/jobs/:jobId/apply`.
+   * - Mengembalikan pesan sukses atau error yang terstandardisasi.
    */
   static async uploadCVs(jobId: string, cvFiles: File[]): Promise<UploadCVsResponse> {
     console.log(`ApplicantService.uploadCVs: ${cvFiles.length} files for job ${jobId}`);
@@ -118,7 +134,10 @@ export class ApplicantService {
   }
 
   /**
-   * Update applicant CV
+   * Update applicant CV (single)
+   * - Jika USE_MOCK_API: MockDatabase.updateApplicantCV mengembalikan applicant terbaru.
+   * - Jika non-mock: PUT multipart ke `/api/applicants/:applicantId/update-cv`.
+   * - Mapping response API kembali ke tipe Applicant.
    */
   static async updateCV(applicantId: string, cvFile: File): Promise<UpdateCVResponse> {
     console.log('ApplicantService.updateCV:', applicantId);
@@ -182,6 +201,9 @@ export class ApplicantService {
 
   /**
    * Delete applicant
+   * - Jika USE_MOCK_API: hapus di MockDatabase.
+   * - Jika non-mock: DELETE ke `/api/applicants/:applicantId`.
+   * - Mengembalikan { success, message? } atau { success:false, error }.
    */
   static async delete(applicantId: string): Promise<{ success: boolean; message?: string; error?: string }> {
     console.log('ApplicantService.delete:', applicantId);
