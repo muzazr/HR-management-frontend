@@ -11,6 +11,7 @@ import Cropper from 'react-easy-crop';
 export default function RegisterPage() {
   const router = useRouter();
   
+  // state utama form
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,7 +24,7 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false)
 
-  // state photo & crop
+  // state terkait photo & cropper
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [imageSrc, setImageSrc] = useState<string | null>(null)
@@ -32,6 +33,12 @@ export default function RegisterPage() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
   const [isCropModalOpen, setIsCropModalOpen] = useState(false)
 
+  /**
+   * handleSubmit
+   * - Mengumpulkan data form ke FormData, termasuk foto bila ada.
+   * - Memanggil AuthService.register dan meng-handle hasilnya (success/error).
+   * - Menjaga state loading dan menavigasi ke /login jika sukses.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -69,6 +76,11 @@ export default function RegisterPage() {
     }
   };
 
+  /**
+   * handleChange
+   * - Generic input handler untuk semua input berbasis name attribute.
+   * - Reset error bila ada perubahan input.
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -77,6 +89,11 @@ export default function RegisterPage() {
     if (error) setError('');
   };
 
+  /**
+   * handlePhotoChange
+   * - Membaca file gambar dari input dan melakukan setting imageSrc sebagai dataURL.
+   * - Membuka modal crop setelah image dimuat.
+   */
   const handlePhotoChange = (e: React. ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -89,10 +106,20 @@ export default function RegisterPage() {
     }
   };
 
+  /**
+   * onCropComplete
+   * - Callback dari react-easy-crop, menyimpan area crop dalam pixel.
+   */
   const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels)
   }
 
+  /**
+   * handleSaveCrop
+   * - Menghasilkan Blob hasil crop via util getCroppedImg.
+   * - Membuat preview URL dan File untuk dikirim ke server.
+   * - Menutup modal crop setelah berhasil.
+   */
   const handleSaveCrop = async () => {
     try {
       if(imageSrc && croppedAreaPixels) {
@@ -116,10 +143,18 @@ export default function RegisterPage() {
     }
   }
 
+  /**
+   * handlePhotoClick
+   * - Memicu klik pada input file tersembunyi.
+   */
   const handlePhotoClick = () => {
     fileInputRef.current?.click();
   };
 
+  /**
+   * removePhoto
+   * - Menghapus file foto dan preview dari state, serta mereset input file.
+   */
   const removePhoto = () => {
     setPhotoFile(null);
     setPhotoPreview('');

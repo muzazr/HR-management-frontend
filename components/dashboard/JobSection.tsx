@@ -7,11 +7,23 @@ interface JobSectionProps {
     onJobUpdate: () => void
 }
 
+/**
+ * JobSection
+ * - Kontainer UI untuk bagian "Jobs" di dashboard.
+ * - Menyediakan kontrol sorting, pencarian, dan memanggil JobGrid untuk render card.
+ * Catatan:
+ * - Tidak melakukan fetch sendiri, meneruskan ke JobGrid.
+ * - Komponen fokus pada state UI (sort, search, dropdown).
+ */
 export default function JobSection({ onJobUpdate } : JobSectionProps) {
+    // State: opsi sorting yang dipilih
     const [sortBy, setSortBy] = useState('Latest')
+    // State: query untuk filter client-side
     const [searchQuery, setSearchQuery] = useState('')
+    // State: kontrol visibility dropdown sorting
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
+    // Opsi sorting yang tersedia (sesuaikan label dengan implementasi di JobGrid)
     const sortOptions = ['Latest', 'Oldest', 'Most Applicants', 'Closing Soon']
 
     return (
@@ -88,7 +100,10 @@ export default function JobSection({ onJobUpdate } : JobSectionProps) {
                 </div>
             </div>
 
-            {/* Job Cards Grid */}
+            {/* Job Cards Grid
+                - Meneruskan state sortBy dan searchQuery ke JobGrid.
+                - onJobUpdate digunakan untuk memberi tahu parent saat ada penambahan/ubah job.
+            */}
             <JobGrid sortBy={sortBy} searchQuery={searchQuery} onJobUpdate={onJobUpdate} />
         </section>
     )

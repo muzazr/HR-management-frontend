@@ -5,7 +5,10 @@ import { apiClient, delay, USE_MOCK_API } from './client';
 export class JobService {
 
   /**
-   * Get all jobs
+   * getAll
+   * - Ambil semua job.
+   * - Jika mode mock aktif: delegasi ke MockDatabase (simulasi latency).
+   * - Mapping response API ke tipe internal Job.
    */
   static async getAll(): Promise<JobsResponse> {
     console.log('JobService.getAll');
@@ -38,7 +41,9 @@ export class JobService {
   }
 
   /**
-   * Get job by ID
+   * getById
+   * - Ambil job berdasarkan id.
+   * - Pada implementasi non-mock: mengambil seluruh list lalu mencari id (simple cache-less lookup).
    */
   static async getById(jobId: string): Promise<JobResponse> {
     console.log('JobService.getById:', jobId);
@@ -75,7 +80,9 @@ export class JobService {
   }
 
   /**
-   * Create new job
+   * create
+   * - Buat job baru lewat API atau MockDatabase.
+   * - Mapping payload input ke DTO yang dibutuhkan API.
    */
   static async create(jobData: CreateJobRequest): Promise<JobResponse> {
     console.log('JobService.create');
@@ -122,7 +129,9 @@ export class JobService {
   }
 
   /**
-   * Update job
+   * update
+   * - Update job via API atau MockDatabase.
+   * - Mengembalikan job yang telah diperbarui.
    */
   static async update(jobId: string, updates: Partial<Job>): Promise<JobResponse> {
     console.log('JobService.update:', jobId);
@@ -166,7 +175,9 @@ export class JobService {
   }
 
   /**
-   * Delete job
+   * delete
+   * - Hapus job lewat API atau MockDatabase.
+   * - Mengembalikan status operasi.
    */
   static async delete(jobId: string): Promise<{ success: boolean; message?: string; error?: string }> {
     console.log('JobService.delete:', jobId);
@@ -187,7 +198,9 @@ export class JobService {
   }
 
   /**
-   * Toggle job open/closed status
+   * toggleStatus
+   * - Toggle open/closed status job.
+   * - Implementasi non-mock: ambil job saat ini, ubah is_open dan update.
    */
   static async toggleStatus(jobId: string): Promise<JobResponse> {
     console.log('JobService.toggleStatus:', jobId);
@@ -224,7 +237,9 @@ export class JobService {
   }
 
   /**
-   * Get job statistics
+   * getStats
+   * - Hitung statistik sederhana berdasarkan daftar job yang tersedia.
+   * - Mengembalikan openJobs, closedJobs, totalApplicants dan totalJobs.
    */
   static async getStats(): Promise<{ success: boolean; data?: any; error?: string }> {
     console.log('JobService.getStats');
@@ -262,7 +277,9 @@ export class JobService {
   }
 
   /**
-   * Search jobs by keyword
+   * search
+   * - Cari job berdasarkan keyword (title, location, skills).
+   * - Pada non-mock: memanfaatkan getAll() lalu filter client-side.
    */
   static async search(keyword: string): Promise<JobsResponse> {
     console.log('JobService.search:', keyword);

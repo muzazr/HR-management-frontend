@@ -3,7 +3,7 @@ import { Storage } from '../storage';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ai-recruitment-app-sigma.vercel.app';
 export const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK !== 'false';
 
-//Debug log environment
+// Debug log environment (disabled by default)
 // console.log('Environment Config:', {
 //   API_BASE_URL,
 //   USE_MOCK_API,
@@ -11,8 +11,7 @@ export const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK !== 'false';
 //   NEXT_PUBLIC_USE_MOCK: process.env.NEXT_PUBLIC_USE_MOCK,
 // });
 
-// ==================== HELPERS ====================
-
+// helpers
 export async function delay(ms: number = 800): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -24,7 +23,10 @@ interface FetchOptions extends RequestInit {
 }
 
 /**
- * Base fetch function with automatic auth & error handling
+ * apiClient
+ * - Wrapper fetch standar yang menambahkan Authorization header (dari Storage) kecuali skipAuth=true.
+ * - Menangani parsing JSON, validasi content-type, dan penanganan error umum (401 -> clear session + redirect).
+ * - Melempar Error dengan pesan yang sudah diformat bila response tidak ok.
  */
 export async function apiClient<T>(
   endpoint: string,
@@ -88,7 +90,10 @@ export async function apiClient<T>(
 }
 
 /**
- * Upload files with FormData
+ * uploadClient
+ * - Khusus untuk upload file via FormData.
+ * - Menambahkan Authorization header jika token tersedia.
+ * - Menggunakan pola penanganan error serupa apiClient (termasuk 401 handling).
  */
 export async function uploadClient<T>(
   endpoint: string,
@@ -134,6 +139,7 @@ export async function uploadClient<T>(
 
     return data;
   } catch (error: any) {
+    // Silangkan logging di sini sesuai kebutuhan (tidak otomatis console.error untuk production).
     // console.error('Upload Error:', endpoint, error.message);
     throw error;
   }

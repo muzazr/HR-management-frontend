@@ -28,6 +28,7 @@ export default function JobCard({
     
     const router = useRouter()
     
+    // Mapping warna untuk gradient blur (dipilih via prop cardColor)
     const gradientColors = {
         blue: '#29C5EE',
         red: '#CF1A2C',
@@ -35,14 +36,25 @@ export default function JobCard({
         green: '#19C8A7',
     }
 
+    // Warna yang dipakai pada kartu saat render
     const currentColor = gradientColors[cardColor as keyof typeof gradientColors]
 
+    /**
+     * formatDeadline
+     * - Format tanggal deadline ke format yang mudah dibaca (DD Month YYYY).
+     * - Menggunakan locale en-GB untuk konsistensi tampilan.
+     */
     const formatDeadline = (dateString: string): string => {
         const date = new Date(dateString)
         const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }
         return date.toLocaleDateString('en-GB', options)
     }
 
+    /**
+     * getDaysUntilDeadline
+     * - Hitung selisih hari antara sekarang dan deadline.
+     * - Menggunakan Math.ceil agar hari yang tersisa tampil lebih manusiawi.
+     */
     const getDaysUntilDeadline = (dateString: string): number => {
         const now = new Date()
         const deadline = new Date(dateString)
@@ -53,6 +65,7 @@ export default function JobCard({
 
     const daysLeft = getDaysUntilDeadline(deadline)
 
+    // Navigasi ke halaman detail job saat kartu diklik
     const handleCardClick = () => {
         router.push(`/dashboard/jobs/${jobId}`)
     }
@@ -63,7 +76,7 @@ export default function JobCard({
             className="group relative bg-[#1e1e1e] rounded-2xl p-4 lg:p-5 overflow-hidden hover:bg-[#1a1a1a] transition-colors cursor-pointer"
         >
             
-            {/* Gradient Blur */}
+            {/* Gradient Blur - elemen dekoratif, tidak interaktif */}
             <div className="absolute inset-0 pointer-events-none">
                 <div 
                     className="absolute w-[20%] h-[20%] top-[10%] right-[10%] rounded-full blur-[60px] group-hover:top-[60%] group-hover:right-[70%] transition-all ease-in-out duration-700"
@@ -77,7 +90,7 @@ export default function JobCard({
 
             <div className="relative z-10">
                 
-                {/* Header */}
+                {/* Header: judul job + waktu posted */}
                 <div className="flex items-start justify-between mb-3 lg:mb-4">
                     <div className="flex items-center flex-1 min-w-0">
                         <div className="min-w-0">
@@ -86,7 +99,7 @@ export default function JobCard({
                         </div>
                     </div>
                     <button 
-                        // onClick={handleCardClick}
+                        // kontrol visual; aksi utama tetap pada klik kartu
                         className="p-3 lg:p-4 rounded-full bg-[#ffffff]/10 hover:bg-[#2a2a2a] transition-colors flex-shrink-0 cursor-pointer"
                     >
                         <Image 
@@ -99,7 +112,7 @@ export default function JobCard({
                     </button>
                 </div>
 
-                {/* Location + min_education */}
+                {/* Location + min_education: badge sederhana */}
                 <div className="flex flex-wrap items-center gap-2 mb-4 lg:mb-6">
                     <span className='bg-[#282828] py-1.5 lg:py-2 px-3 lg:px-4 flex items-center gap-1 text-[#898989] font-medium rounded-2xl text-xs'>
                         <Image 
@@ -123,7 +136,7 @@ export default function JobCard({
                     </span>
                 </div>
 
-                {/* Footer */}
+                {/* Footer: jumlah applicants dan info deadline */}
                 <div className="flex items-end justify-between gap-2">
                     <div className="min-w-0">
                         <div>

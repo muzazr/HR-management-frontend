@@ -11,12 +11,30 @@ import { JobService, ApplicantService } from '../../../../lib/api'
 import { Job } from '../../../../types/job'
 import { Applicant } from '../../../../types/applicant'
 
+/**
+ * Halaman detail job (dashboard)
+ * Tanggung jawab:
+ * - Load job dan daftar applicant terkait
+ * - Upload dan proses file CV (PDF)
+ * - Menampilkan, menghapus, dan meng-update applicant
+ * - Menyediakan modal untuk detail applicant, edit job, dan notifikasi
+ */
 export default function JobDetailPage() {
     const params = useParams()
     const router = useRouter()
     const jobId = params.id as string
     const { notification, showSuccess, showError, close } = useNotification()
 
+    /**
+     * State ringkas:
+     * - job, applicants: data utama
+     * - uploadedCVs: buffer file yang akan di-submit
+     * - searchQuery: filter client-side
+     * - selectedApplicant: applicant yang dipilih untuk modal detail
+     * - isEditModalOpen: kontrol modal edit job
+     * - isLoading/isUploading: indikator UI
+     * - error: pesan error generik
+     */
     const [job, setJob] = useState<Job | null>(null)
     const [applicants, setApplicants] = useState<Applicant[]>([])
     const [uploadedCVs, setUploadedCVs] = useState<File[]>([])
@@ -28,6 +46,12 @@ export default function JobDetailPage() {
     const [isUploading, setIsUploading] = useState(false)
     const [error, setError] = useState('')
 
+    /**
+     * refreshData
+     * - Ambil job dan applicants sekaligus (parallel)
+     * - Update state bila respon sukses
+     * - Digunakan ulang oleh inisialisasi dan setelah perubahan data
+     */
     const refreshData = useCallback(async () => {
         if(!jobId) {
             setError('invalid job id')
@@ -54,6 +78,11 @@ export default function JobDetailPage() {
         }
     }, [jobId])
 
+    /**
+     * useEffect init
+     * - Inisialisasi data saat mount
+     * - Menggunakan flag isMounted untuk menghindari state update setelah unmount
+     */
     useEffect (() => {
         let isMounted = true
         
@@ -67,6 +96,12 @@ export default function JobDetailPage() {
         return () => { isMounted = false }
     }, [refreshData])
 
+    /**
+     * displayedApplicants (memoized)
+     * - Sort berdasarkan score (desc)
+     * - Tambah originalRank (1-based)
+     * - Filter nama bila searchQuery ada
+     */
     const displayedApplicants = useMemo(() => {
         const sortedWithRanking = [... applicants]
             .sort((a, b) => b.score - a.score)
@@ -84,6 +119,12 @@ export default function JobDetailPage() {
         return sortedWithRanking
     }, [applicants, searchQuery])
 
+    /**
+     * handleFileUpload
+     * - Validasi tipe file: hanya PDF yang diterima
+     * - Tambah file valid ke uploadedCVs (buffer)
+     * - Tampilkan error via notification bila ada file invalid
+     */
     const handleFileUpload = (e: React. ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files
         if (files) {
@@ -96,10 +137,20 @@ export default function JobDetailPage() {
         }
     }
 
+    /**
+     * removeCV
+     * - Hapus file dari buffer berdasarkan index
+     */
     const removeCV = (index: number) => {
         setUploadedCVs(prev => prev.filter((_, i) => i !== index))
     }
 
+    /**
+     * handleSubmit
+     * - Kirim semua uploadedCVs ke backend via ApplicantService.uploadCVs
+     * - Jika sukses: kosongkan buffer, refresh applicants & job, tunjukkan notifikasi sukses
+     * - Jika gagal: tunjukkan notifikasi error
+     */
     const handleSubmit = async () => {
         if (uploadedCVs.length === 0) return
 
@@ -135,6 +186,12 @@ export default function JobDetailPage() {
         }
     }
 
+    /**
+     * handleUpdateCV
+     * - Update satu CV untuk applicant tertentu
+     * - Setelah sukses: refresh daftar applicants dan job, update selectedApplicant ke versi terbaru
+     * - Mengembalikan data response jika sukses, null jika gagal
+     */
     const handleUpdateCV = async (applicantId: string, file: File) => {
     try {
         setIsUploading(true) 
@@ -174,6 +231,11 @@ export default function JobDetailPage() {
     }
     }
 
+    /**
+     * handleDeleteApplicant
+     * - Hapus applicant lewat API, lalu hapus dari local state dan refresh job untuk update counts
+     * - Tampilkan notifikasi hasil operasi
+     */
     const handleDeleteApplicant = async (applicantId:  string) => {
         try {
             const response = await ApplicantService.delete(applicantId.toString())
@@ -197,6 +259,11 @@ export default function JobDetailPage() {
         }
     }
 
+    /**
+     * handleEditJob
+     * - Update job lewat API dan close modal jika sukses
+     * - Update local job state dengan data terbaru
+     */
     const handleEditJob = async (updates: {
         title: string
         location: string
@@ -218,6 +285,11 @@ export default function JobDetailPage() {
         }
     }
 
+    /**
+     * Render kondisi loading / error:
+     * - Loading: spinner full-screen
+     * - Error / job null: pesan dan tombol kembali ke dashboard
+     */
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#151515] flex items-center justify-center">
@@ -246,6 +318,13 @@ export default function JobDetailPage() {
         )
     }
 
+    /**
+     * Render utama:
+     * - Header: judul job + tombol edit
+     * - Upload Section: area upload & buffer CV
+     * - Search & table/list applicant (desktop + mobile)
+     * - Modals: candidate detail, edit job, notification
+     */
     return (
         <div className="min-h-screen bg-[#151515] px-4">
             
