@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import CandidateDetailModal from '../../../../components/applicant/CandidateDetailModal'
 import EditJobModal from '../../../../components/jobs/EditJobModal'
