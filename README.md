@@ -75,5 +75,3 @@ Referensi file penting
 - API client: `lib/api/client.ts`
 - Crop util: `utils/canvasUtils.ts`
 - Hooks notifikasi/konfirmasi: `hooks/useNotification.ts`, `hooks/useConfirmation.ts`
-
-```
